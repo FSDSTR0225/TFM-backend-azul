@@ -1,7 +1,31 @@
 {
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "mongoose": "^8.13.2"
-  }
+  },
+  "name": "tfm-backend-azul",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FSDSTR0225/TFM-backend-azul.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/FSDSTR0225/TFM-backend-azul/issues"
+  },
+  "homepage": "https://github.com/FSDSTR0225/TFM-backend-azul#readme"
 }

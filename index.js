@@ -1,10 +1,11 @@
 const express = require("express");
 const app = express();
 const port = 3000;
-const connectDB = require("./db/connectDB");
+const connectDB = require("./src/db");
 const cors = require("cors");
 
-app.use(Express.json());
+app.use(express.json());
+connectDB();
 app.use(cors());
 
 app.listen(port, () => {
