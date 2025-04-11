@@ -51,6 +51,22 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    favoriteGames: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Game",
+      },
+    ],
+    platforms: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Platform",
+      },
+    ],
+    avatar: {
+      type: String,
+      default: "https://example.com/default-avatar.png",
+    },
   },
   { timestamps: true }
 );
