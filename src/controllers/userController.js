@@ -10,8 +10,8 @@ const getUsers = async (req, res) => {
     }
 const searchUsers = async (req, res) => {
     try {
-      const { username } = req.body;
-      const users = await User.find({ username: { $regex: username, $options: "i" } });
+      
+      const users = await User.find({ username: { $regex: req.params.users, $options: "i" } });
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: "Error al buscar usuarios" });
@@ -20,8 +20,7 @@ const searchUsers = async (req, res) => {
 
 const searchUsersByGames = async (req, res) => {
     try {
-      const { username } = req.body;
-      const users = await User.find({ favoriteGames: { $regex: username, $options: "i" } });
+      const users = await User.find({ favoriteGames: { $regex: req.params.games, $options: "i" } });
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: "Error al buscar usuarios" });
@@ -29,8 +28,7 @@ const searchUsersByGames = async (req, res) => {
   };
 const searchUsersByPlatforms = async (req, res) => {
     try {
-      const { username } = req.body;
-      const users = await User.find({ platforms: { $regex: username, $options: "i" } });
+      const users = await User.find({ platforms: { $regex: req.params.platforms, $options: "i" } });
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: "Error al buscar usuarios" });
