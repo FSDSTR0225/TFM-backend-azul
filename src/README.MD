@@ -75,16 +75,16 @@ npx nodemon index.js
 
 ### 🌍 Endpoints principales (ejemplos)
 
-| Método | Ruta                  | Descripción                        |
-| ------ | --------------------- | ---------------------------------- |
-| POST   | `/api/users/register` | Registro de usuario nuevo          |
-| POST   | `/api/users/login`    | Inicio de sesión                   |
-| GET    | `/api/users/profile`  | Perfil del usuario autenticado     |
-| GET    | `/api/games`          | Lista de juegos disponibles        |
-| POST   | `/api/events`         | Crear nuevo evento o partida (LFG) |
-| GET    | `/api/events`         | Buscar eventos disponibles         |
-| POST   | `/api/match/invite`   | Invitar a otro jugador a jugar     |
-| POST   | `/api/rating/:userId` | Valorar a un jugador tras partida  |
+| Método | Ruta              | Descripción                        |
+| ------ | ----------------- | ---------------------------------- |
+| POST   | `/users/register` | Registro de usuario nuevo          |
+| POST   | `/users/login`    | Inicio de sesión                   |
+| GET    | `/users/profile`  | Perfil del usuario autenticado     |
+| GET    | `/games`          | Lista de juegos disponibles        |
+| POST   | `/events`         | Crear nuevo evento o partida (LFG) |
+| GET    | `/events`         | Buscar eventos disponibles         |
+| POST   | `/match/invite`   | Invitar a otro jugador a jugar     |
+| POST   | `/rating/:userId` | Valorar a un jugador tras partida  |
 
 > La lista completa se encuentra en `/routes/` y puede ampliarse en futuras versiones.
 
@@ -112,3 +112,15 @@ npx nodemon index.js
 
 Backend desarrollado por el **Equipo Azul**.  
 Todos los derechos reservados. Proyecto privado.
+
+👥 Equipo Azul
+
+Salva
+
+Lidia
+
+Giú
+
+Adrián
+
+Toomaj

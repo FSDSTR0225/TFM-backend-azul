@@ -8,19 +8,25 @@ const gameSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
     },
     description: {
       type: String,
-      required: true,
     },
     genre: {
       type: String,
-      required: true,
     },
 
-    platforms: [String],
+    platforms: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Platform",
+      },
+    ],
+    steamAppId: {
+      type: Number,
+    },
   },
+
   { timestamps: true }
 );
 
