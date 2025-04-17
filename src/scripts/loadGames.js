@@ -1899,27 +1899,86 @@ const games = [
 const loadGames = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    await Game.deleteMany(); // Elimina lo que haya en la base de datos en "games",lo uso para actualizar(1º elimino y luego añado)
+    await Game.deleteMany(); // Elimina lo que haya en la base de datos en "games", lo uso para actualizar
 
     const allGames = []; // Para almacenar los juegos
 
     for (let i = 0; i < games.length; i++) {
       // Bucle para iterar en games,cada iteracion coge un juego y lo guarda.
       const game = games[i];
+      console.log(`Procesando: ${game.name}`); // Para ver que juego esta procesando por si salta error
 
       const platformIds = await Platform.find({
-        //buscamos en Platform las plataformas con el name = a las plataformas de los juegos incluidos en el array(game.platform) y seleccionamos su id
+        //buscamos en la base de datos las plataformas con el name = a las plataformas de los juegos incluidos en el array ppal(game.platform) y seleccionamos su id
         name: { $in: game.platforms },
       }).select("_id");
 
-      allGames.push({
-        name: game.name,
-        steamAppId: game.steamAppId,
-        platforms: platformIds, //Crea el juego con el nombre dado,el steamAppId dado y la plataforma/s asociada al id antes obtenido.
-      });
+      // Inicializa las variables imagen y descripcion por defecto
+      let imageUrl = null;
+      let description = "Información no disponible";
+
+      // Si no hay steamAppid..
+      if (!game.steamAppId) {
+        try {
+          // Búsqueda del steamAppId,se hace fetch a la api para obtener juegos y buscamos en la respuesta que nos da por nombre,
+          // comparando nuestro nombre dado con el que viene en la API
+          const searchResponse = await fetch(
+            `https://api.steampowered.com/ISteamApps/GetAppList/v2/`
+          );
+          const searchData = await searchResponse.json();
+          const appId = searchData.applist.apps.find(
+            (app) => app.name.toLowerCase() === game.name.toLowerCase()
+          )?.appid; //se encuentra el juego?Accedemos a su appid,sino undefined
+
+          if (appId) {
+            game.steamAppId = appId; // Si encontramos el appId, lo asignamos al steamAppId del array
+          } else {
+            console.warn(`No se encontró steamAppId para: ${game.name}`);
+          }
+        } catch (err) {
+          console.warn(
+            `Error al buscar steamAppId para ${game.name}:`,
+            err.message
+          );
+        }
+      }
+
+      // Si ya tiene un steamAppId se hace una peticion a la API de steam(pero otra ULR)para obtener los detalles del juego(imagen y descripcion)
+      if (game.steamAppId) {
+        try {
+          const steamResponse = await fetch(
+            `https://store.steampowered.com/api/appdetails?appids=${game.steamAppId}`
+          );
+          const steamData = await steamResponse.json();
+          const gameInfo = steamData[game.steamAppId]; // Busca los datos del juego por su steamAppid en la API
+          const gameData =
+            gameInfo && gameInfo.success && gameInfo.data
+              ? gameInfo.data
+              : null; // si encontramos la info && la info es correcta && contiene datos devuelveme los datos sino null(para no romper script)
+
+          if (gameData) {
+            // Si obtenemos datos:
+            imageUrl = gameData.header_image || null; // Si hay imagen, la usamos, sino, la dejamos como null
+            description = gameData.about_the_game || description; // Asigna la descripción si está disponible
+
+            // Añade el juego al array allgames
+            allGames.push({
+              name: game.name,
+              steamAppId: game.steamAppId,
+              platforms: platformIds,
+              imageUrl,
+              description,
+            });
+          } else {
+            console.warn(`No hay datos válidos en Steam para: ${game.name}`);
+          }
+        } catch (err) {
+          console.warn(`Error con Steam (${game.name}):`, err.message);
+        }
+      }
     }
 
-    await Game.insertMany(allGames); // insertMany() es para isnertar varias cosas a la vez,igual que create() pero con create seria 1 a 1.
+    await Game.insertMany(allGames); // insertMany() es para insertar varias cosas a la vez
     console.log("Juegos insertados con éxito");
     mongoose.connection.close();
   } catch (error) {
@@ -1929,3 +1988,70 @@ const loadGames = async () => {
 };
 
 loadGames();
+
+// const loadGames = async () => {
+//   try {
+//     await mongoose.connect(process.env.MONGO_URI);
+//     await Game.deleteMany(); // Elimina lo que haya en la base de datos en "games",lo uso para actualizar(1º elimino y luego añado)
+
+//     const allGames = []; // Para almacenar los juegos
+
+//     for (let i = 0; i < games.length; i++) {
+//       // Bucle para iterar en games,cada iteracion coge un juego y lo guarda.
+//       const game = games[i];
+//       console.log(`🟦 Procesando: ${game.name}`);
+
+//       const platformIds = await Platform.find({
+//         //buscamos en Platform las plataformas con el name = a las plataformas de los juegos incluidos en el array(game.platform) y seleccionamos su id
+//         name: { $in: game.platforms },
+//       }).select("_id");
+
+//       let imageUrl = null;
+//       let description = "Información no disponible";
+
+//       if (game.steamAppId) {
+//         try {
+//           const steamResponse = await fetch(
+//             `https://store.steampowered.com/api/appdetails?appids=${game.steamAppId}`
+//           );
+//           const steamData = await steamResponse.json();
+//           const gameInfo = steamData[game.steamAppId]; // Buscamos los datos del juego por su id en la Api
+//           const gameData =
+//             gameInfo && gameInfo.success && gameInfo.data
+//               ? gameInfo.data
+//               : null; // si encontramos la info && la info es correcta && contiene datos devuelveme los datos sino null(para no romper script)
+
+//           if (gameData) {
+//             imageUrl = gameData.header_image || null; // Si tiene imagen la coge
+//             description = gameData.about_the_game || description; // Descripcion del juego si esta disponible
+//             console.log(`✅ Info encontrada para ${game.name}`);
+//           } else {
+//             console.warn(`⚠️ No hay datos válidos en Steam para: ${game.name}`);
+//           }
+//         } catch (err) {
+//           console.warn(`❌ Error con Steam (${game.name}):`, err.message);
+//         }
+//       } else {
+//         console.log(`ℹ️ Sin SteamAppID: ${game.name}`);
+//       }
+
+//       allGames.push({
+//         name: game.name,
+//         steamAppId: game.steamAppId,
+//         platforms: platformIds, //Crea el juego con el nombre dado,el steamAppId dado y la plataforma/s asociada al id antes obtenido.
+//         imageUrl, //Guarda la imagen en el juego creado
+//         description, // Guarda descripcion completa
+//       });
+//     }
+
+//     await Game.insertMany(allGames); // insertMany() es para isnertar varias cosas a la vez,igual que create() pero con create seria 1 a 1.
+//     console.log("Juegos insertados con éxito");
+//     mongoose.connection.close();
+//   } catch (error) {
+//     console.error("Error al insertar juegos:", error.message);
+//     console.error(error);
+//     mongoose.connection.close();
+//   }
+// };
+
+// loadGames();
