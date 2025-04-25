@@ -6,16 +6,13 @@ const {
 } = require("../controllers/registerAndLoginUsersController");
 const {
   getUsers,
-  searchUsers,
-  searchUsersByGames,
-  searchUsersByPlatforms,
+  searchUsers
 } = require("../controllers/userController");
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/", getUsers);
 router.get("/search/:users", searchUsers);
-router.get("/search/:games", searchUsersByGames);
-router.get("/search/:platforms", searchUsersByPlatforms);
+
 
 module.exports = router;

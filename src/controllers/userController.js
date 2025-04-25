@@ -10,39 +10,31 @@ const getUsers = async (req, res) => {
 };
 const searchUsers = async (req, res) => {
   try {
-    const users = await User.find({
-      username: { $regex: req.params.users, $options: "i" },
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: "Error al buscar usuarios" });
-  }
-};
+    const { username, favoriteGames, platforms } = req.query;
+    const query = {};
 
-const searchUsersByGames = async (req, res) => {
-  try {
-    const users = await User.find({
-      favoriteGames: { $regex: req.params.games, $options: "i" },
-    });
+    if (username) {
+      query.username = { $regex: username, $options: "i" };
+    }
+
+    if (favoriteGames) {
+      const gameIds = favoriteGames.steamAppId
+      query.favoriteGames = { $in: gameIds };
+    }
+
+    if (platforms) {
+      const platformIds = platforms.name;
+      query.platforms = { $in: platformIds };
+    }
+
+    const users = await User.find(query).populate('favoriteGames').populate('platforms');
     res.json(users);
   } catch (error) {
-    res.status(500).json({ error: "Error al buscar usuarios" });
-  }
-};
-const searchUsersByPlatforms = async (req, res) => {
-  try {
-    const users = await User.find({
-      platforms: { $regex: req.params.platforms, $options: "i" },
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: "Error al buscar usuarios" });
+    res.status(500).json({ error: "Error al buscar los usuarios" });
   }
 };
 
 module.exports = {
   getUsers,
-  searchUsers,
-  searchUsersByGames,
-  searchUsersByPlatforms,
+  searchUsers
 };
