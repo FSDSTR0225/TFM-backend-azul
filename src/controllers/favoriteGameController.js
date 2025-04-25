@@ -10,7 +10,7 @@ const addFavoriteGame = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // Comprobamos que el juego no esta ya en favoritos,le hacemos somo que compara si al menos 1 elemento cumpel la condicion,
+    // Comprobamos que el juego no esta ya en favoritos,le hacemos some que compara si al menos 1 elemento cumpel la condicion,
     //y con equals.da igual si le llega string u objectId que lo compara y si esta ya no lo añade.
     if (user.favoriteGames.some((game) => game.equals(gameId))) {
       return res
