@@ -1,30 +1,6 @@
-// require("dotenv").config();
-// const mongoose = require("mongoose");
-// const Platform = require("../models/platformModel"); // Asegúrate de que la ruta sea correcta
-
-// mongoose
-//   .connect(process.env.MONGO_URI)
-//   .then(async () => {
-//     console.log("Conectado a la base de datos");
-
-//     // Limpiar los documentos con slug: null
-//     await Platform.updateMany({ slug: null }, { $unset: { slug: "" } });
-
-//     // Ahora eliminar cualquier restricción de índice en slug
-//     await Platform.collection.dropIndex("slug_1");
-
-//     console.log("Índice 'slug_1' eliminado correctamente");
-
-//     mongoose.connection.close();
-//   })
-//   .catch((error) => {
-//     console.error("Error de conexión:", error);
-//     mongoose.connection.close();
-//   });
-
 require("dotenv").config();
 const mongoose = require("mongoose");
-const Platform = require("../models/platformModel"); // Asegúrate de que la ruta sea correcta
+const Platform = require("../models/platformModel");
 
 // Listado de plataformas a insertar
 const platforms = [
