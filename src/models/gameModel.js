@@ -22,8 +22,9 @@ const gameSchema = new mongoose.Schema(
         ref: "Platform",
       },
     ],
-    steamAppId: {
+    rawgId: {
       type: Number,
+      Unique: true,
     },
   },
 

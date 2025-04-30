@@ -25,7 +25,7 @@ const platforms = [
   {
     _id: new Types.ObjectId("681224bc8520bbed4685dba2"),
     name: "Xbox",
-    slug: "xbox-series-x", // o "xbox-one" si prefieres
+    slug: "xbox-series-x", // usa este como principal
     icon: "/images/platforms/xbox1.png",
   },
   {
@@ -37,7 +37,7 @@ const platforms = [
   {
     _id: new Types.ObjectId("681224bc8520bbed4685dba4"),
     name: "Mobile",
-    slug: "mobile",
+    slug: "mobile", // ios y android se transforman en "mobile" en el script
     icon: "/images/platforms/mobile.png",
   },
 ];
@@ -45,19 +45,17 @@ const platforms = [
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
-    console.log("Conectado a la base de datos");
+    console.log("🟢 Conectado a MongoDB");
 
-    // Eliminar todas las plataformas anteriores
-    await Platform.deleteMany({});
-    console.log("Todas las plataformas eliminadas");
+    await Platform.deleteMany();
+    console.log("🧹 Todas las plataformas eliminadas");
 
-    // Insertar nuevas plataformas
     await Platform.insertMany(platforms);
-    console.log("Nuevas plataformas insertadas correctamente");
+    console.log("✅ Nuevas plataformas insertadas correctamente");
 
     mongoose.connection.close();
   })
   .catch((error) => {
-    console.error("Error de conexión:", error);
+    console.error("❌ Error de conexión:", error);
     mongoose.connection.close();
   });
