@@ -22,9 +22,10 @@ const gameSchema = new mongoose.Schema(
         ref: "Platform",
       },
     ],
-    steamAppId: {
-      type: Number,
-    },
+id:{
+  type: Number
+
+}
   },
 
   { timestamps: true }
