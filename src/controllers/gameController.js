@@ -16,4 +16,30 @@ const getGames = async (req, res) => {
   }
 };
 
-module.exports = getGames;
+const getGameById = async (req, res) => {
+  const { id, rawgId } = req.params;
+  try {
+    const gameId = await Game.findById(id);
+    if (!gameId) {
+      return res.status(404).json({ error: "Juego no encontrado" });
+    }
+    res.status(200).json(gameId);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getGameByRawgId = async (req, res) => {
+  const { rawgId } = req.params;
+  try {
+    const gameId = await Game.findOne({ rawgId });
+    if (!gameId) {
+      return res.status(404).json({ error: "Juego no encontrado" });
+    }
+    res.status(200).json(gameId);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getGames, getGameById, getGameByRawgId };
