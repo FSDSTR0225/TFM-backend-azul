@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const registerUser = async (req, res) => {
   try {
@@ -15,11 +16,12 @@ const registerUser = async (req, res) => {
         message: "El nombre de usuario o correo electrónico ya existe",
       });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       username,
       email,
-      password: hashedPassword,
+      // password: hashedPassword,
+      password: password,
     });
 
     return res.status(201).json({
@@ -53,13 +55,24 @@ const loginUser = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const passwordMatch = await bcrypt.compare(password, userExist.password);
+    // const passwordMatch = await bcrypt.compare(password, userExist.password);
 
-    if (!passwordMatch) {
+    // if (!passwordMatch) {
+    if (!password) {
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
+    const token = jwt.sign(
+      {
+        username: userExist.username,
+        email: userExist.email,
+        favoriteGames: userExist.favoriteGames,
+        platforms: userExist.platforms,
+      },
+      process.env.JWT_SECRET
+    );
+    return res.status(200).json({ access_token: token, token_type: "Bearer", userExist });
 
-    return res.status(200).json({ message: "Sesión iniciada", userExist });
+    // return res.status(200).json({ message: "Sesión iniciada", userExist });
   } catch (error) {
     return res
       .status(500)
