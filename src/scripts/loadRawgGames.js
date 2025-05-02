@@ -9,16 +9,16 @@ const MONGO_URI = process.env.MONGO_URI;
 const RAWG_API_URL = "https://api.rawg.io/api/games";
 
 const startPage = 1;
-const endPage = 5; // Cambia esto si quieres más páginas
+const endPage = 5; // Cambia esto si queremos más páginas
 const pageSize = 25;
 
 async function importGames() {
   try {
     await mongoose.connect(MONGO_URI);
-    console.log("✅ Conectado a MongoDB");
+    console.log(" Conectado a MongoDB");
 
     for (let page = startPage; page <= endPage; page++) {
-      console.log(`➡️ Página ${page}...`);
+      console.log(` Página ${page}...`);
 
       const res = await fetch(
         `${RAWG_API_URL}?key=${API_KEY}&page=${page}&page_size=${pageSize}`
@@ -28,7 +28,7 @@ async function importGames() {
       for (let i = 0; i < data.results.length; i++) {
         const game = data.results[i];
 
-        // Normalizar slugs (iOS + Android → Mobile)
+        // (iOS + Android → Mobile)
         const slugs = game.platforms.map((p) => {
           const slug = p.platform.slug;
           return slug === "ios" || slug === "android" ? "mobile" : slug;
@@ -53,14 +53,14 @@ async function importGames() {
         };
 
         await Game.updateOne({ rawgId: game.id }, gameData, { upsert: true });
-        console.log(`🎮 Guardado: ${game.name}`);
+        console.log(` Guardado: ${game.name}`);
       }
     }
 
-    console.log("✅ Todos los juegos importados correctamente.");
+    console.log(" Todos los juegos importados correctamente.");
     mongoose.disconnect();
   } catch (error) {
-    console.error("❌ Error al importar juegos:", error.message);
+    console.error(" Error al importar juegos:", error.message);
     mongoose.disconnect();
   }
 }
