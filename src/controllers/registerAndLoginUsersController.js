@@ -23,8 +23,17 @@ const registerUser = async (req, res) => {
       // password: hashedPassword,
       password: password,
     });
-
+    const token = jwt.sign(
+      {
+        username: user.username,
+        email: user.email,
+        password: user.password,
+      },
+      process.env.JWT_SECRET
+    );
     return res.status(201).json({
+      accessTdoken: token,
+      token_type: "Bearer",
       message: "Usuario registrado correctamente",
       user: {
         id: user._id,
@@ -70,7 +79,9 @@ const loginUser = async (req, res) => {
       },
       process.env.JWT_SECRET
     );
-    return res.status(200).json({ access_token: token, token_type: "Bearer", userExist });
+    return res
+      .status(200)
+      .json({ access_token: token, token_type: "Bearer", userExist });
 
     // return res.status(200).json({ message: "Sesión iniciada", userExist });
   } catch (error) {
