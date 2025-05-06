@@ -12,8 +12,8 @@ const gameSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    genre: {
-      type: String,
+    genres: {
+      type: [String],
     },
 
     platforms: [
@@ -23,9 +23,41 @@ const gameSchema = new mongoose.Schema(
       },
     ],
     rawgId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    screenshots: {
+      type: [String],
+    },
+    tags: {
+      type: [String],
+    },
+    background_image_additional: {
+      type: String,
+    },
+    clip: {
+      type: String,
+    },
+    released: {
+      type: String,
+    },
+    stores: {
+      type: [String],
+    },
+    metacritic: {
       type: Number,
       required: true,
       unique: true,
+    },
+    lastImportedAt: {
+      type: Date,
+    },
+    developers: {
+      type: [String],
+    },
+    esrbRating: {
+      type: String,
     },
   },
 
