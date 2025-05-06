@@ -111,5 +111,26 @@ const loginUser = async (req, res) => {
       .json({ message: "Error inesperado del servidor", error });
   }
 };
+const getMe = async (req, res) => {
+  try {
+    const secretKey = process.env.JWT_SECRET;
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
 
-module.exports = { registerUser, loginUser };
+    if (!token) {
+      return res.status(401).json({ message: "Access token missing" });
+    }
+
+    const decoded = jwt.verify(token, secretKey);
+
+    const user = await User.findOne({ username: decoded.username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.json({ message: "user identified correctly", user: user });
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid token" });
+  }
+};
+
+module.exports = { registerUser, loginUser, getMe };
