@@ -45,17 +45,6 @@ const platforms = [
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
-<<<<<<< HEAD
-    console.log("Conectado a la base de datos");
-
-    // Eliminar todas las plataformas anteriores
-    await Platform.deleteMany({});
-    console.log("Todas las plataformas eliminadas");
-
-    // Insertar nuevas plataformas
-    await Platform.insertMany(platforms);
-    console.log("Nuevas plataformas insertadas correctamente");
-=======
     console.log(" Conectado a MongoDB");
 
     await Platform.deleteMany();
@@ -63,15 +52,10 @@ mongoose
 
     await Platform.insertMany(platforms);
     console.log(" Nuevas plataformas insertadas correctamente");
->>>>>>> Features-1
 
     mongoose.connection.close();
   })
   .catch((error) => {
-<<<<<<< HEAD
-    console.error("Error de conexión:", error);
-=======
     console.error(" Error de conexión:", error);
->>>>>>> Features-1
     mongoose.connection.close();
   });
