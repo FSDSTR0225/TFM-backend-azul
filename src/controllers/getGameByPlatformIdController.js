@@ -16,8 +16,11 @@ const getGamesByPlatformId = async (req, res) => {
     if (games.length === 0) {
       // si el array devuelto esta vacio..
       return res
-        .status(404)
-        .json({ message: "No se encontraron juegos para esta plataforma" });
+        .status(200)
+        .json({
+          message: "No se encontraron juegos para esta plataforma",
+          games: [],
+        });
     }
 
     return res

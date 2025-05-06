@@ -9,11 +9,12 @@ const {
   deleteFavoritePlatform,
 } = require("../controllers/favoritePlatformController");
 const { getProfile } = require("../controllers/profileController");
+const verifyToken = require("../middlewares/verifyToken");
 
-router.get("/", getProfile);
-router.post("/profile/favoriteGames", addFavoriteGame);
-router.delete("/profile/favoriteGames/:gameId", deleteFavoriteGame);
-router.post("/profile/platforms/:platformsId", addFavoritePlatform);
-router.delete("/profile/platforms/:platformsId", deleteFavoritePlatform);
+router.get("/", verifyToken, getProfile);
+router.post("/favoriteGame/:gameId", verifyToken, addFavoriteGame);
+router.delete("/favoriteGames/:gameId", verifyToken, deleteFavoriteGame);
+router.post("/platforms/:platformId", verifyToken, addFavoritePlatform);
+router.delete("/platforms/:platformId", verifyToken, deleteFavoritePlatform);
 
 module.exports = router;

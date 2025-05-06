@@ -12,9 +12,9 @@ const getUsers = async (req, res) => {
   }
 };
 
-const getUserById = async (req, res) => {
+const getUserByUsername = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
+    const user = await User.findOne({ username: req.params.username }) // Buscamos el usuario por username
       .select("username avatar favoriteGames platforms aviability") // Elegimos los campos a devolver de la ficha publica
       .populate("favoriteGames", "name")
       .populate("platforms", "name"); // Elegimos que de favoritesGames  y platform se vea el nombre
@@ -32,42 +32,7 @@ const getUserById = async (req, res) => {
   }
 };
 
-const searchUsers = async (req, res) => {
-  try {
-    const users = await User.find({
-      username: { $regex: req.params.users, $options: "i" },
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: "Error al buscar usuarios" });
-  }
-};
-
-const searchUsersByGames = async (req, res) => {
-  try {
-    const users = await User.find({
-      favoriteGames: { $regex: req.params.games, $options: "i" },
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: "Error al buscar usuarios" });
-  }
-};
-const searchUsersByPlatforms = async (req, res) => {
-  try {
-    const users = await User.find({
-      platforms: { $regex: req.params.platforms, $options: "i" },
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: "Error al buscar usuarios" });
-  }
-};
-
 module.exports = {
   getUsers,
-  searchUsers,
-  searchUsersByGames,
-  searchUsersByPlatforms,
-  getUserById,
+  getUserByUsername,
 };
