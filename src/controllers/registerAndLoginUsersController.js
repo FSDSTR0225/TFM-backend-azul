@@ -71,7 +71,8 @@ const loginUser = async (req, res) => {
     const isEmail = await login.includes("@"); //creamos la variable isEmail que busca si el login incluye el simbolo @
     const condition = isEmail ? { email: login } : { username: login }; // y creamos la variable condition que busca si isEmail es true,es decir si isEmail incluye el simbolo @,entonces busca por email, si no busca por username.
 
-    const userExist = await User.findOne(condition); //buscamos si el usuario existe en la base de datos,con findOne le pasamos condition que es el objeto que contiene el email o username, y si no existe error 404.
+    const userExist = await User.findOne(condition).select("+password"); //buscamos si el usuario existe en la base de datos,con findOne le pasamos condition que es el objeto que contiene el email o username, y si no existe error 404, el .select("+password") es para que nos devuelva la contraseña encriptada,
+    // ya que por defecto no la devuelve por seguridad y asi podemos compararla con la contraseña que nos mandan.
     if (!userExist) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
