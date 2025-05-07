@@ -8,10 +8,8 @@ const {
   addFavoritePlatform,
   deleteFavoritePlatform,
 } = require("../controllers/favoritePlatformController");
-const { getProfile } = require("../controllers/profileController");
-const verifyToken = require("../middlewares/verifyToken");
 
-router.get("/", verifyToken, getProfile);
+const verifyToken = require("../middlewares/verifyToken");
 router.post("/favoriteGame/:gameId", verifyToken, addFavoriteGame);
 router.delete("/favoriteGames/:gameId", verifyToken, deleteFavoriteGame);
 router.post("/platforms/:platformId", verifyToken, addFavoritePlatform);
