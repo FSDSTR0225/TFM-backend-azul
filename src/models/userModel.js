@@ -68,6 +68,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "https://example.com/default-avatar.png",
     },
+    availability: {
+      // Campo añadido
+      type: String,
+      default: "No disponible", // Valor por defecto
+    },
   },
   { timestamps: true }
 );
