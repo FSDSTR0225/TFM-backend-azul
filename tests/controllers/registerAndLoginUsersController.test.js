@@ -27,7 +27,7 @@ describe("User Routes Integration Tests", () => {
 
   // Pruebas para el endpoint de registro
   describe("POST /auth/register", () => {
-    it("should register a new user", async () => {
+    it("Deberia registrar un nuevo usuario", async () => {
       const response = await request(app).post("/auth/register").send({
         username: "testuser",
         email: "test@gmail.com",
@@ -45,7 +45,7 @@ describe("User Routes Integration Tests", () => {
       expect(user.username).toBe("testuser");
       expect(user.email).toBe("test@gmail.com");
     });
-    it("Deberia retornar una erro 400 si no hay password", async () => {
+    it("Deberia retornar una error 400 si no hay password", async () => {
       const response = await request(app).post("/auth/register").send({
         username: "testuser",
         email: "test@gmail.com",
