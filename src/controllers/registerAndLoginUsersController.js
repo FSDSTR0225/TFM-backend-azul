@@ -96,8 +96,8 @@ const loginUser = async (req, res) => {
 
     //respuesta con el token,bearer es el tipo de token que estamos usando, y el mensaje de exito,ademas de los datos del usuario que acabamos de crear.
     return res.status(200).json({
-      access_token: token,
-      token_type: "Bearer",
+      message: "Sesión iniciada correctamente",
+      token,
       user: {
         id: userExist._id,
         username: userExist.username,
