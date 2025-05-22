@@ -57,52 +57,123 @@ describe("User Routes Integration Tests", () => {
       expect(user).toBeNull();
     });
   });
-});
 
-// Pruebas para el endpoint de inicio de sesión
+  // Pruebas para el endpoint de inicio de sesión
 
-it("Debería iniciar sesión correctamente con email", async () => {
-  // Registramos al usuario
-  await request(app).post("/auth/register").send({
-    username: "testuser",
-    email: "test@mail.com",
-    password: "testpassword",
+  it("Debería iniciar sesión correctamente con email", async () => {
+    const userData = {
+      username: "testuser",
+      email: "test@gmail.com",
+      password: "contraseña123",
+    };
+    const resRegister = await request(app)
+      .post("/auth/register")
+      .send(userData);
+
+    expect(resRegister.status).toBe(201);
+    expect(resRegister.body).toHaveProperty(
+      "message",
+      "Usuario registrado correctamente"
+    );
+    expect(resRegister.body).toHaveProperty("user");
+
+    const User = mongoose.model("User");
+    const user = await User.findOne({ email: userData.email });
+    expect(user.username).toBe(userData.username);
+    expect(user.email).toBe(userData.email);
+
+    // Step 2: Intenta hacer login con ese usuario usando POST a /api/users/login
+
+    const resLogin = await request(app).post("/auth/login").send({
+      login: "test@gmail.com", // tambien puedes usar "testuser" como username
+      password: userData.password,
+    });
+
+    // Step 3: Verifica:
+    expect(resLogin.statusCode).toBe(200);
+    expect(resLogin.body).toHaveProperty("access_token");
+    expect(resLogin.body).toHaveProperty("token_type", "Bearer");
+    expect(resLogin.body).toHaveProperty("user");
   });
 
-  // Iniciamos sesión con el email
-  const response = await request(app).post("/auth/login").send({
-    login: "test@mail.com",
-    password: "testpassword",
+  test("No debería iniciar sesión con credenciales incorrectas", async () => {
+    // Step 1: Registra un usuario nuevo
+    const userData = {
+      username: "testuser",
+      email: "test@gmail.com",
+      password: "contraseña123",
+    };
+    const resRegister = await request(app)
+      .post("/auth/register")
+      .send(userData);
+
+    expect(resRegister.status).toBe(201);
+    expect(resRegister.body).toHaveProperty(
+      "message",
+      "Usuario registrado correctamente"
+    );
+    expect(resRegister.body).toHaveProperty("user");
+
+    const User = mongoose.model("User");
+    const user = await User.findOne({ email: userData.email });
+    expect(user.username).toBe(userData.username);
+    expect(user.email).toBe(userData.email);
+    // Step 2: Intenta login con la contraseña incorrecta
+
+    const resLogin = await request(app).post("/auth/login").send({
+      login: "test@gmail.com", // tambien puedes usar "testuser" como username
+      password: "contraseñaIncorrecta",
+    });
+    // Step 3: Verifica error 401 y mensaje 'Contraseña incorrecta'
+    expect(resLogin.statusCode).toBe(401);
+    expect(resLogin.body).toHaveProperty("message", "Contraseña incorrecta");
   });
 
-  expect(response.status).toBe(200);
-  expect(response.body).toHaveProperty(
-    "message",
-    "Sesión iniciada correctamente"
-  );
-  expect(response.body).toHaveProperty("token");
-  expect(response.body).toHaveProperty("user");
-  expect(response.body.user).toHaveProperty("username", "testuser");
-  expect(response.body.user).toHaveProperty("email", "test@mail.com");
-});
+  test("Debería obtener el perfil del usuario autenticado", async () => {
+    const userData = {
+      username: "testuser",
+      email: "test@gmail.com",
+      password: "contraseña123",
+    };
+    const resRegister = await request(app)
+      .post("/auth/register")
+      .send(userData);
 
-it("Debería iniciar sesión correctamente con username", async () => {
-  await request(app).post("/auth/register").send({
-    username: "anotheruser",
-    email: "another@mail.com",
-    password: "testpassword",
+    expect(resRegister.status).toBe(201);
+    expect(resRegister.body).toHaveProperty(
+      "message",
+      "Usuario registrado correctamente"
+    );
+    expect(resRegister.body).toHaveProperty("user");
+
+    const User = mongoose.model("User");
+    const user = await User.findOne({ email: userData.email });
+    expect(user.username).toBe(userData.username);
+    expect(user.email).toBe(userData.email);
+
+    // Step 2: Intenta hacer login con ese usuario usando POST a /api/users/login
+
+    const resLogin = await request(app).post("/auth/login").send({
+      login: "test@gmail.com", // tambien puedes usar "testuser" como username
+      password: userData.password,
+    });
+
+    // Step 3: Verifica:
+    expect(resLogin.statusCode).toBe(200);
+    expect(resLogin.body).toHaveProperty("access_token");
+    expect(resLogin.body).toHaveProperty("token_type", "Bearer");
+    expect(resLogin.body).toHaveProperty("user");
+    const token = resLogin.body.access_token; // Guardamos el token para usarlo en la siguiente petición
+    console.log("TOKEN:", token);
+    // Step 3: Hacer GET con Authorization
+    const resProfile = await request(app)
+      .get("/users/me")
+      .set("Authorization", `Bearer ${token}`);
+
+    // Step 4: Verificar respuesta
+    expect(resProfile.status).toBe(200);
+    expect(resProfile.body).toHaveProperty("user");
+    expect(resProfile.body.user).toHaveProperty("username", userData.username);
+    expect(resProfile.body.user).toHaveProperty("email", userData.email);
   });
-
-  const response = await request(app).post("/auth/login").send({
-    login: "anotheruser",
-    password: "testpassword",
-  });
-
-  expect(response.status).toBe(200);
-  expect(response.body).toHaveProperty(
-    "message",
-    "Sesión iniciada correctamente"
-  );
-  expect(response.body.user).toHaveProperty("username", "anotheruser");
-  expect(response.body.user).toHaveProperty("email", "another@mail.com");
 });

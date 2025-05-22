@@ -68,6 +68,7 @@ const loginUser = async (req, res) => {
         .status(400)
         .json({ message: "Por favor complete todos los campos" });
     }
+
     const isEmail = await login.includes("@"); //creamos la variable isEmail que busca si el login incluye el simbolo @
     const condition = isEmail ? { email: login } : { username: login }; // y creamos la variable condition que busca si isEmail es true,es decir si isEmail incluye el simbolo @,entonces busca por email, si no busca por username.
 
@@ -96,8 +97,8 @@ const loginUser = async (req, res) => {
 
     //respuesta con el token,bearer es el tipo de token que estamos usando, y el mensaje de exito,ademas de los datos del usuario que acabamos de crear.
     return res.status(200).json({
-      message: "Sesión iniciada correctamente",
-      token,
+      access_token: token,
+      token_type: "Bearer",
       user: {
         id: userExist._id,
         username: userExist.username,
