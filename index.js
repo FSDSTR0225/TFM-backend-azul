@@ -8,7 +8,8 @@ const platformsRoute = require("./src/routes/platformsRoute");
 const gamesRoute = require("./src/routes/gamesRoute");
 const profileRoute = require("./src/routes/profileRoute");
 const searchRoute = require("./src/routes/searchRoute");
-const authRoute = require("./src/routes/authRoute"); // ✅ NUEVO: importar authRoute
+const authRoute = require("./src/routes/authRoute");
+const dashboardRoute = require("./src/routes/dashboardRoute");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,12 +23,12 @@ app.use(cors());
 connectDB();
 
 // Rutas
-app.use("/auth", authRoute); // ✅ NUEVO: montar ruta de login y register
-app.use("/users", usersRoute);
+app.use("/auth", authRoute); //
 app.use("/platforms", platformsRoute);
 app.use("/games", gamesRoute);
 app.use("/profile", profileRoute);
 app.use("/search", searchRoute);
+app.use("/dashboard", dashboardRoute);
 
 // Servidor
 app.listen(port, () => {
