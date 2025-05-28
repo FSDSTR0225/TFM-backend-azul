@@ -10,7 +10,14 @@ const registerUser = async (req, res) => {
         .status(400)
         .json({ message: "Por favor complete todos los campos" });
     }
-    const userExists = await User.findOne({ $or: [{ email }, { username }] }); // buscamos si usuario o email ya existen con el operador $or que es de mongo y permite buscar por varios campos a la vez
+
+    const cleanUsername = username.trim();
+    const usernameLower = cleanUsername.toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
+
+    const userExists = await User.findOne({
+      $or: [{ email: cleanEmail }, { usernameLower }],
+    }); // buscamos si usuario o email ya existen con el operador $or que es de mongo y permite buscar por varios campos a la vez
     if (userExists) {
       return res.status(409).json({
         //usamos el status 409 que es para conflictos,en este caso si el usuario o email ya existen
@@ -22,8 +29,9 @@ const registerUser = async (req, res) => {
 
     // creamos el user con create de mongoose, y lo guardamos en la base de datos.
     const user = await User.create({
-      username,
-      email,
+      username: cleanUsername,
+      usernameLower: usernameLower,
+      email: cleanEmail,
       password: hashedPassword,
     });
 
@@ -68,8 +76,11 @@ const loginUser = async (req, res) => {
         .status(400)
         .json({ message: "Por favor complete todos los campos" });
     }
-    const isEmail = await login.includes("@"); //creamos la variable isEmail que busca si el login incluye el simbolo @
-    const condition = isEmail ? { email: login } : { username: login }; // y creamos la variable condition que busca si isEmail es true,es decir si isEmail incluye el simbolo @,entonces busca por email, si no busca por username.
+    const isEmail = login.includes("@"); //creamos la variable isEmail que busca si el login incluye el simbolo @
+    const condition = isEmail
+      ? { email: login.trim().toLowerCase() }
+      : { usernameLower: login.trim().toLowerCase() }; // y creamos la variable condition que busca si isEmail es true,es decir si isEmail incluye el simbolo @,entonces busca por email, si no busca por usernameLower (para ignorar mayús/minús)
+    //usernameLower es un campo que creamos en el modelo de usuario para guardar el username en minúsculas y así poder buscarlo sin importar si el usuario escribe mayúsculas o minúsculas.
 
     const userExist = await User.findOne(condition).select("+password"); //buscamos si el usuario existe en la base de datos,con findOne le pasamos condition que es el objeto que contiene el email o username, y si no existe error 404, el .select("+password") es para que nos devuelva la contraseña encriptada,
     // ya que por defecto no la devuelve por seguridad y asi podemos compararla con la contraseña que nos mandan.

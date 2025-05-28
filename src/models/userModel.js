@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    usernameLower: {
+      type: String,
+      required: true,
+      lowercase: true, // Asegura que el username se guarde en minúsculas en otro campo
+    },
     email: {
       type: String,
       required: true,
@@ -69,9 +74,8 @@ const userSchema = new mongoose.Schema(
       default: "https://example.com/default-avatar.png",
     },
     availability: {
-      // Campo añadido
       type: String,
-      default: "No disponible", // Valor por defecto
+      default: "No disponible",
     },
   },
   { timestamps: true }
