@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 
 const addFavoriteGame = async (req, res) => {
   try {
-    const userId = req.user._id; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
+    const userId = req.userId; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
     const gameIds = req.body.gameIds; // Obtenemos el o los ids del juego de la peticion cuando lo indicamos en el frontend (hacemos click en el chips)
 
     const user = await User.findById(userId); // Buscamos al usuario en la base de datos
@@ -47,7 +47,7 @@ const addFavoriteGame = async (req, res) => {
 
 const deleteFavoriteGame = async (req, res) => {
   try {
-    const userId = req.user._id; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
+    const userId = req.userId; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
     const gameId = req.params.gameId; // Obtenemos el ID del juego de la peticion cuando lo indicamos en el frontend (hacemos click en el chips)
     const user = await User.findById(userId);
 
