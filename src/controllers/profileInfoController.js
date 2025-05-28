@@ -8,7 +8,7 @@ const editProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const { username, email,oldPassword,   newPassword, avatar } = req.body;
+    const { username, email,oldPassword, newPassword, avatar } = req.body;
     if (username) user.username = username;
     if (email) user.email = email;
     if (newPassword) {
