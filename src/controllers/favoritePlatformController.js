@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 
 const addFavoritePlatform = async (req, res) => {
   try {
-    const userId = req.user._id; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
+    const userId = req.userId; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
     const platformsId = req.body.platformsId;
 
     const user = await User.findById(userId);
@@ -46,7 +46,7 @@ const addFavoritePlatform = async (req, res) => {
 
 const deleteFavoritePlatform = async (req, res) => {
   try {
-    const userId = req.user._id; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
+    const userId = req.userId; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
     const { platformId } = req.params;
 
     const user = await User.findById(userId);

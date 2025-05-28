@@ -1,11 +1,11 @@
 const User = require("../models/userModel");
-
+require("dotenv").config();
 const getUsers = async (req, res) => {
   try {
     const users = await User.find()
       .select("username avatar favoriteGames platforms") // añado el select para que cuando muestre todos los usuarios solo venga esta info y no email,password...)
-      .populate("favoriteGames", "name") // añado el populate para que de eso que viene me de solo el name.
-      .populate("platforms", "name");
+      .populate("favoriteGames", "name , imageUrl") // añado el populate para que de eso que viene me de solo el name.
+      .populate("platforms", "name, icon");
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener los usuarios" });
@@ -34,25 +34,24 @@ const getUserByUsername = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const secretKey = process.env.JWT_SECRET;
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
+    // Prendiamo l'utente usando l'id decodificato dal middleware
+    const user = await User.findById(req.userId)
+      .select("username avatar favoriteGames platforms aviability friends email")
+      .populate("favoriteGames", "name imageUrl")
+      .populate("platforms", "name icon")
+      .populate("friends", "username avatar");
 
-    if (!token) {
-      return res.status(401).json({ message: "Access token missing" });
-    }
-
-    const decoded = jwt.verify(token, secretKey);
-
-    const user = await User.findOne({ username: decoded.username });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    return res.json({ message: "user identified correctly", user: user });
+
+    return res.json({ message: "User identified correctly", user });
   } catch (err) {
-    return res.status(403).json({ message: "Invalid token" });
+    console.error("❌ Errore in getMe:", err);
+    return res.status(500).json({ message: "Server error" });
   }
-};
+}
+
 
 module.exports = {
   getUsers,
