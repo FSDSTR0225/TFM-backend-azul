@@ -9,6 +9,7 @@ const gamesRoute = require("./src/routes/gamesRoute");
 const profileRoute = require("./src/routes/profileRoute");
 const searchRoute = require("./src/routes/searchRoute");
 const authRoute = require("./src/routes/authRoute"); // ✅ NUEVO: importar authRoute
+const eventsRoute = require("./src/routes/eventsRoute");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use("/platforms", platformsRoute);
 app.use("/games", gamesRoute);
 app.use("/profile", profileRoute);
 app.use("/search", searchRoute);
+app.use("/events", eventsRoute);
 
 // Servidor
 app.listen(port, () => {
