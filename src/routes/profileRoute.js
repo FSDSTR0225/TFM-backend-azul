@@ -16,7 +16,7 @@ router.post("/favoriteGames", verifyToken, addFavoriteGame);
 router.delete("/favoriteGames/:gameId", verifyToken, deleteFavoriteGame);
 router.post("/platforms/:platformId", verifyToken, addFavoritePlatform);
 router.delete("/platforms/:platformId", verifyToken, deleteFavoritePlatform);
-router.post("/editProfile", verifyToken, editProfile);
+router.put("/editProfile", verifyToken, editProfile);
 router.post("/friends", verifyToken, addFriend);
 router.delete("/friends/:friendId", verifyToken, deleteFriend);
 module.exports = router;

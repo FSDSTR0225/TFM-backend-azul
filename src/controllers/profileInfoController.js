@@ -4,28 +4,33 @@ const bcrypt = require("bcryptjs");
 const editProfile = async (req, res) => {
   try {
     const userId = req.userId;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("+password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     const { username, email,oldPassword, newPassword, avatar } = req.body;
+       if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      return res.status(400).json({ message: "Email non valida" });
+    }
+    if (newPassword && !oldPassword) {
+      return res.status(400).json({ message: "Devi inserire la vecchia password per cambiarla" });
+    }
     if (username) user.username = username;
     if (email) user.email = email;
+    if (avatar) user.avatar = avatar;
     if (newPassword) {
       const isMatch = await bcrypt.compare(oldPassword, user.password);
       if (!isMatch) {
         return res.status(401).json({ message: "Contraseña anterior incorrecta" });
       }
-      const password = newPassword;
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
       user.password = hashedPassword;
     }
-    if (avatar) user.avatar = avatar;
 
     await user.save();
     res.status(200).json({
-      message: "Perfil editado correctamente",
+      message: "Perfil editado correctamente", user: { username, email, avatar },
     });
   } catch (error) {
     res
