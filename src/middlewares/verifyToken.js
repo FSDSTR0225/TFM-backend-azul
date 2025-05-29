@@ -18,9 +18,7 @@ const verifyToken = async (req, res, next) => {
   try {
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.userId = decodedToken.id; // <--- Aquí guardamos el ID del usuario
-    // opcional: también puedes guardar el objeto completo si lo necesitas
-    // req.user = decodedToken;
+    req.user = decodedToken; // Almacenamos la información del usuario decodificada en el objeto req para que esté disponible en las siguientes funciones de middleware o controladores.
 
     next();
   } catch (error) {
