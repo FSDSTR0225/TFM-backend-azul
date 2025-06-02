@@ -18,6 +18,11 @@ const platformSchema = new mongoose.Schema(
       match: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
       lowercase: true,
     },
+    order: {
+      type: Number,
+      required: true,
+      unique: true, // Aseguramos que el orden sea único para evitar conflictos
+    },
   },
   { timestamps: true }
 );
