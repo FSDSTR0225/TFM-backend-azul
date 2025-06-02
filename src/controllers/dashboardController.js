@@ -4,7 +4,7 @@ const Event = require("../models/eventModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
 
 const getDailySummary = async (req, res) => {
-  const { userId } = req.user;
+  const  userId  = req.user.id;
 
   try {
     //AMISTADES APROBADAS (ULTIMOS 2 DIAS)

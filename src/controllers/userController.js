@@ -34,9 +34,9 @@ const getUserByUsername = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    // Prendiamo l'utente usando l'id decodificato dal middleware
-    const user = await User.findById(req.userId)
-      .select("username avatar favoriteGames platforms aviability friends email")
+   const userId = req.user.id; // Obtenemos el userId del token decodificado en el middleware verifyToken
+    const user = await User.findById(userId) // Buscamos al usuario por su ID
+      .select("username avatar favoriteGames platforms availability friends email")
       .populate("favoriteGames", "name imageUrl")
       .populate("platforms", "name icon")
       .populate("friends", "username avatar");

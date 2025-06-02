@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     },
     usernameLower: {
       type: String,
-      required: true,
+      required: false, // Este campo es opcional, diversamente cada modifica del perfil se requiere envirlo en el body
       lowercase: true, // Asegura que el username se guarde en minúsculas en otro campo
     },
     email: {

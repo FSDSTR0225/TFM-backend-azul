@@ -2,8 +2,8 @@ const User = require("../models/userModel");
 
 const addFriend = async (req, res) => {
   try {
-    const userId = req.userId; // no es user.id
-    const friendsId = req.body.friendsId;
+    const userId = req.user.id; 
+    const friendsId = req.body.friendsIds;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -34,7 +34,7 @@ const addFriend = async (req, res) => {
 
 const deleteFriend = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user.id;
     const { friendId } = req.params;
 
     const user = await User.findById(userId);
