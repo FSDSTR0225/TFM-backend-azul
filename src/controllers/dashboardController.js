@@ -4,7 +4,7 @@ const Event = require("../models/eventModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
 
 const getDailySummary = async (req, res) => {
-  const  userId  = req.user.id;
+  const userId = req.user.id;
 
   try {
     //AMISTADES APROBADAS (ULTIMOS 2 DIAS)
@@ -112,7 +112,7 @@ const getDailySummary = async (req, res) => {
     }).populate("event", "title"); // queremos el evento al que se ha unido el usuario, ya que el joinEventRequest tiene un campo que hace referencia al evento, y le decimos que solo queremos el title(ve al modelo event,busca el modelo del id correspondiente y dame el title)
 
     // Por si el evento fue eliminado o no existe
-    const eventValidAccepted = aceptedJoinEventReq.filter((req) => req.event);
+    const eventValidAccepted = acceptedJoinEventReq.filter((req) => req.event);
 
     const valid = joinEventReq.filter((req) => req.event); // filtro de seguridad para que solo nos devuelva los joinEventRequest donde el evento existe y cumple la condicion del match, ya que si no seria null y no podriamos acceder a los campos del evento y como ya esta en el array inicial joinEventReq no podemos descartarlo en el populate, asi que lo filtramos aqui.
 
