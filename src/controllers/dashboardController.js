@@ -1,4 +1,4 @@
-const FriendsRequest = require("../models/friendsRequestModel");
+const FriendRequest = require("../models/friendRequestModel");
 const Notification = require("../models/notificationModel");
 const Event = require("../models/eventModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
@@ -9,8 +9,8 @@ const getDailySummary = async (req, res) => {
   try {
     //AMISTADES APROBADAS (ULTIMOS 2 DIAS)
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // Fecha de hace dos días
-    const requests = await FriendsRequest.find({
-      status: "approved",
+    const requests = await FriendRequest.find({
+      status: "accepted",
       updatedAt: { $gte: twoDaysAgo },
       $or: [{ userReceiver: userId }, { userSender: userId }],
     }) // Buscamos las solicitudes de amistad aprobadas desde hace dos días $gte se usa para mayor o igual que,como hemos definido la fecha de hace dos días, buscamos las solicitudes que se han actualizado desde esa fecha hasta hoy.
@@ -105,14 +105,14 @@ const getDailySummary = async (req, res) => {
       .populate("userRequester", "username avatar")
       .populate({ path: "event", populate: { path: "game", select: "name" } }); // hacemos populate del usuario que ha hecho la solicitud al evento, ya que el joinEventRequest tiene un campo que hace referencia al usuario, y le decimos que solo queremos el username y el avatar
 
-    const approvedJoinEventReq = await JoinEventRequest.find({
+    const acceptedJoinEventReq = await JoinEventRequest.find({
       userRequester: userId,
-      status: "approved",
+      status: "accepted",
       updatedAt: { $gte: twoDaysAgo },
     }).populate("event", "title"); // queremos el evento al que se ha unido el usuario, ya que el joinEventRequest tiene un campo que hace referencia al evento, y le decimos que solo queremos el title(ve al modelo event,busca el modelo del id correspondiente y dame el title)
 
     // Por si el evento fue eliminado o no existe
-    const eventValidApproved = approvedJoinEventReq.filter((req) => req.event);
+    const eventValidAccepted = aceptedJoinEventReq.filter((req) => req.event);
 
     const valid = joinEventReq.filter((req) => req.event); // filtro de seguridad para que solo nos devuelva los joinEventRequest donde el evento existe y cumple la condicion del match, ya que si no seria null y no podriamos acceder a los campos del evento y como ya esta en el array inicial joinEventReq no podemos descartarlo en el populate, asi que lo filtramos aqui.
 
@@ -137,7 +137,7 @@ const getDailySummary = async (req, res) => {
     }
 
     //SOLICITUDES DE UNION A EVENTOS QUE ME HAN ACEPTADO Y AHORA ESTOY EN ELLOS
-    const approvedEvent = eventValidApproved.map((req) => {
+    const acceptedEvent = eventValidAccepted.map((req) => {
       return {
         type: "eventApproval",
         message: `Has sido aceptado en el evento '${req.event.title}'`,
@@ -165,7 +165,7 @@ const getDailySummary = async (req, res) => {
       newFriends,
       upcomingEvents,
       joinEventRequests,
-      approvedEvent,
+      acceptedEvent,
       notificationSummary: notificationSummary || null, // Si notificationSummary no existe, lo devolvemos como null
       ...(joinRequestSummary && { joinRequestSummary }), // Si joinRequestSummary existe, lo añadimos al objeto de respuesta
     });

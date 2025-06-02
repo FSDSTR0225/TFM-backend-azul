@@ -14,7 +14,7 @@ const joinEventRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
     message: {
