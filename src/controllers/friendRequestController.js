@@ -113,18 +113,42 @@ const acceptFriendRequest = async (req, res) => {
     }
 
     if (findRequest.userReceiver.toString() !== receiverId) {
+      // Comprobamos si el receptor de la solicitud es el usuario que está intentando aceptarla y si no es así, devolvemos un error 403
       return res
         .status(403)
         .json({ message: "No tienes permiso para aceptar esta solicitud" });
     }
 
     if (findRequest.status !== "pending") {
+      // Comprobamos si la solicitud ya ha sido aceptada o rechazada,es decir, si su estado no es "pending"
       return res
         .status(409)
         .json({ message: "Esta solicitud ya ha sido procesada" });
     }
 
-    findRequest.status = "accepted";
+    findRequest.status = "accepted"; // Cambiamos el estado de la solicitud a "accepted"
+
+    const sender = await User.findById(findRequest.userSender);
+    const receiver = await User.findById(findRequest.userReceiver);
+    if (!sender || !receiver) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    const senderIsFriend = sender.friends.some(
+      (friend) => friend.user.toString() === receiver._id.toString()
+    );
+    const receiverIsFriend = receiver.friends.some(
+      (friend) => friend.user.toString() === sender._id.toString()
+    );
+
+    if (!senderIsFriend) {
+      sender.friends.push({ user: receiver._id, status: "accepted" });
+    }
+    if (!receiverIsFriend) {
+      receiver.friends.push({ user: sender._id, status: "accepted" });
+    }
+    await sender.save();
+    await receiver.save();
     await findRequest.save();
 
     return res
@@ -171,10 +195,23 @@ const rejectFriendRequest = async (req, res) => {
   }
 };
 
+const getFriends = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).populate("friends.user");
+
+    const acceptedFriends = user.friends.filter((f) => f.status === "accepted");
+
+    return res.json({ friends: acceptedFriends });
+  } catch (err) {
+    return res.status(500).json({ message: "Error al obtener amigos" });
+  }
+};
+
 module.exports = {
   createFriendRequest,
   getFriendRequestsReceived,
   getFriendRequestsSent,
   acceptFriendRequest,
   rejectFriendRequest,
+  getFriends,
 };
