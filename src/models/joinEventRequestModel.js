@@ -14,13 +14,17 @@ const joinEventRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "accepted", "rejected", "cancelledByUser"],
       default: "pending",
     },
     message: {
       type: String,
       maxlength: 200,
       required: false,
+    },
+    archived: {
+      type: Boolean,
+      default: false, // Indica si la solicitud ha sido archivada al historial una vez gestionada
     },
   },
   { timestamps: true }

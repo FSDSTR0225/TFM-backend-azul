@@ -10,6 +10,8 @@ const searchRoute = require("./routes/searchRoute");
 const authRoute = require("./routes/authRoute");
 const dashboardRoute = require("./routes/dashboardRoute");
 const friendsRoute = require("./routes/friendsRoute");
+const eventsRoute = require("./routes/eventsRoute");
+const joinRequestRoute = require("./routes/joinRequestRoutes");
 
 const app = express();
 
@@ -27,5 +29,7 @@ app.use("/profile", profileRoute);
 app.use("/search", searchRoute);
 app.use("/dashboard", dashboardRoute);
 app.use("/friends", friendsRoute);
+app.use("/events", eventsRoute);
+app.use("/join-request", joinRequestRoute);
 
 module.exports = app;

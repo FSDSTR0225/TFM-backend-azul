@@ -48,7 +48,6 @@ const gameSchema = new mongoose.Schema(
     metacritic: {
       type: Number,
       required: true,
-      unique: true,
     },
     lastImportedAt: {
       type: Date,

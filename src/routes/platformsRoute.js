@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const getPlatforms = require("../controllers/platformController");
+const { getPlatforms } = require("../controllers/platformController");
 const getGamesByPlatformId = require("../controllers/getGameByPlatformIdController");
 
 router.get("/", getPlatforms);

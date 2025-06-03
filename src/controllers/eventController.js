@@ -1,4 +1,5 @@
-const EventModel = require("../models/eventModel");
+const Event = require("../models/eventModel");
+const JoinEventRequest = require("../models/joinEventRequestModel");
 
 const createEvent = async (req, res) => {
   try {
@@ -7,35 +8,447 @@ const createEvent = async (req, res) => {
       game,
       platform,
       date,
-      hour,
+      maxParticipants,
+      requiresApproval,
       description,
-      creator,
-      image = "",
     } = req.body;
 
-    // Aquí crea el evento con la data recibida, image puede no venir
-    const newEvent = new EventModel({
+    if (!title || !description || !date || !game || !platform) {
+      return res.status(400).json({
+        message: "Es necesario completar todos los campos del evento",
+      });
+    }
+
+    if (description.length > 200) {
+      return res.status(400).json({
+        message: "La descripción no puede exceder los 200 caracteres",
+      });
+    }
+
+    // Aquí crea el evento con la data recibida
+    const newEvent = await Event.create({
       title,
       game,
       platform,
       date,
-      hour,
       description,
-      creator,
-      image,
+      creator: req.user.id,
+      maxParticipants: maxParticipants,
+      requiresApproval: requiresApproval,
     });
 
-    await newEvent.save();
+    const populatedEvent = await Event.findById(newEvent._id) // populamos el evento recién creado para incluir los detalles del juego, plataforma y creador
+      .populate("game", "name")
+      .populate("platform", "name icon")
+      .populate("creator", "username avatar");
 
-    res.status(201).json(newEvent);
+    res
+      .status(200)
+      .json({ message: "Evento creado con éxito", event: populatedEvent });
   } catch (error) {
     console.error("Error al crear evento:", error);
-    res
-      .status(500)
-      .json({ message: "Error creando evento", error: error.message });
+    return res.status(500).json({ error: error.message, stack: error.stack });
+  }
+};
+
+const getEvents = async (req, res) => {
+  try {
+    const dbEvents = await Event.find({ date: { $gte: new Date() } })
+      .populate("game", "name")
+      .populate("creator", "username avatar")
+      .populate("platform", "name icon");
+
+    const events = dbEvents
+      .filter((event) => event.creator)
+      .map((event) => {
+        return {
+          id: event._id.toString(),
+          title: event.title,
+          game: {
+            name: event.game.name,
+          },
+          platform: {
+            name: event.platform.name,
+            icon: event.platform.icon,
+          },
+          date: event.date,
+          requiresApproval: event.requiresApproval,
+          participants: event.participants.length,
+          maxParticipants: event.maxParticipants,
+          creator: {
+            username: event.creator.username,
+            avatar: event.creator.avatar,
+          },
+        };
+      });
+
+    return res.status(200).json({ message: "Listado de eventos", events });
+  } catch (error) {
+    console.error("Error al obtener listado de eventos", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getEventById = async (req, res) => {
+  const { eventId } = req.params; // Obtenemos el id del evento de la url
+
+  try {
+    const event = await Event.findById(eventId) // Buscamos el evento por su id y lo llenamos con los datos de la base de datos,hacemos populate de los datos que queremos obtener de la base de datos.
+      .populate("game", "name")
+      .populate("creator", "username avatar")
+      .populate("participants", "username avatar")
+      .populate("platform", "name icon");
+    if (!event) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    const currentEvent = {
+      // al evento le añadimos los datos que queremos devolver al cliente,para mostrarlo en el frontend
+      id: event._id.toString(),
+      title: event.title,
+      description: event.description,
+      date: event.date,
+      game: {
+        name: event.game.name,
+      },
+      platform: {
+        name: event.platform.name,
+        icon: event.platform.icon,
+      },
+      creator: event.creator.username,
+      creatorAvatar: event.creator.avatar,
+      participants: event.participants.map((part) => ({
+        // el array de participantes lo llenamos con los datos que queremos devolver,hacemos un map para recorrer el array de participantes y devolver solo los datos que queremos
+        username: part.username,
+        avatar: part.avatar,
+      })),
+      requiresApproval: event.requiresApproval,
+      maxParticipants: event.maxParticipants,
+      numberParticipants: event.participants.length,
+    };
+    return res.status(200).json({
+      message: "Evento obtenido correctamente",
+      currentEvent,
+    });
+  } catch (error) {
+    console.error("Error al acceder al evento", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const joinEvent = async (req, res) => {
+  const { eventId } = req.params; // Obtenemos el id del evento de la url
+  const userId = req.user.id; // Obtenemos el id del usuario de la peticion, ya que lo guardamos en el token al registrarse o iniciar sesion
+  try {
+    const event = await Event.findById(eventId); // accedemos al evento por su id
+
+    if (!event) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    if (new Date() > event.date) {
+      // si la fecha del evento es menor que la fecha actual, significa que el evento ya ha pasado
+      return res
+        .status(400)
+        .json({ message: "Este evento ya no esta disponible" });
+    }
+
+    if (event.participants.includes(userId)) {
+      // si el usuario ya esta en el evento, no le dejamos unirse de nuevo.
+      return res
+        .status(409)
+        .json({ message: "El usuario ya se encuentra unido a este evento" });
+    }
+
+    if (
+      event.maxParticipants !== null && // si el maxParticipants no es null,es decir tiene un maximo de participantes y el numero de participantes es igual o mayor que el maximo de participantes,retorna que el evento ha alcanzado el maximo de participantes
+      event.participants.length >= event.maxParticipants
+    ) {
+      return res.status(400).json({
+        message: "El evento ha alcanzado el número máximo de participantes",
+      });
+    }
+
+    if (event.requiresApproval === false) {
+      // si el evento no requiere aprobacion, el usuario se une directamente al evento
+      event.participants.push(userId); // añadimos el id del usuario al array de participantes del evento
+      await event.save(); // guardamos el evento con el nuevo participante
+      const updatedEvent = await Event.findById(eventId)
+        .populate("game", "name")
+        .populate("creator", "username avatar")
+        .populate("participants", "username avatar")
+        .populate("platform", "name icon");
+
+      const currentEvent = {
+        id: updatedEvent._id.toString(),
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+        date: updatedEvent.date,
+        game: {
+          name: updatedEvent.game.name,
+        },
+        platform: {
+          name: updatedEvent.platform.name,
+          icon: updatedEvent.platform.icon,
+        },
+        creator: updatedEvent.creator.username,
+        creatorAvatar: updatedEvent.creator.avatar,
+        participants: updatedEvent.participants.map((part) => ({
+          username: part.username,
+          avatar: part.avatar,
+        })),
+        requiresApproval: updatedEvent.requiresApproval,
+        maxParticipants: updatedEvent.maxParticipants,
+        numberParticipants: updatedEvent.participants.length,
+      };
+
+      return res.status(200).json({
+        message: `El usuario ${userId} se ha unido al evento`,
+        currentEvent,
+      });
+    } else {
+      // si requiere aprobacion,primero comprobamos si ya existe una solicitud de unirse al evento
+      const requestExist = await JoinEventRequest.findOne({
+        userRequester: userId,
+        event: eventId,
+        status: "pending",
+      });
+
+      if (requestExist) {
+        //si la solicitud ya existe, no le dejamos crear otra
+        return res.status(400).json({
+          message:
+            "Ya existe una solicitud para unirte a este evento, por favor, espera respuesta",
+        });
+      }
+      // si no existe la solicitud, la creamos
+      const newJoinRequest = await JoinEventRequest.create({
+        event: eventId,
+        status: "pending",
+        userRequester: userId,
+      });
+
+      return res.status(200).json({
+        message: `El usuario ${userId} ha solicitado unirse al evento`,
+        newJoinRequest,
+      });
+    }
+  } catch (error) {
+    console.error("Error al unirse al evento", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const updateEvent = async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user.id; // Obtenemos el id del usuario de la peticion, ya que lo guardamos en el token al registrarse o iniciar sesion
+  const {
+    id,
+    title,
+    description,
+    date,
+    game,
+    platform,
+    requiresApproval,
+    maxParticipants,
+    creator,
+  } = req.body;
+
+  try {
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    if (event.creator.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para editar este evento" });
+    }
+
+    if (title) event.title = title;
+    if (description) event.description = description;
+    if (date) event.date = date;
+    if (game) event.game = game;
+    if (platform) event.platform = platform;
+    if (typeof requiresApproval !== "undefined")
+      // typeof para comprobar si la variable esta definida
+      event.requiresApproval = requiresApproval;
+    if (typeof maxParticipants !== "undefined") {
+      event.maxParticipants = maxParticipants;
+    }
+
+    await event.save();
+
+    return res
+      .status(200)
+      .json({ message: "Evento actualizado", updatedEvent: event });
+  } catch (error) {
+    console.error("Error al editar el evento", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteEvent = async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    if (event.creator.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para eliminar este evento" });
+    }
+
+    await Event.findByIdAndDelete(eventId);
+    await JoinEventRequest.deleteMany({ event: eventId });
+    return res.status(200).json({ message: "Evento eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar el evento", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getMyEvents = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const myEvents = await Event.find({ creator: userId }) // buscamos los eventos creados donde el creador es el usuario logueado
+      .sort({ date: -1 }) // ordenamos por fecha de creacion,los mas recientes primero (-1 es orden descendente y ordenamos el campo date)
+      .populate({ path: "game", select: "name" }) // obtenemos datos del evento y le hacemos populate a game para obtener el nombre del juego
+      .populate({ path: "platform", select: "name" });
+
+    if (myEvents.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No tienes eventos creados en este momento" });
+    }
+    return res.status(200).json({
+      total: myEvents.length,
+      eventos: myEvents,
+    });
+  } catch (error) {
+    console.error("Error al obtener tus eventos creados", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getPastEvents = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const pastEvents = await Event.find({
+      $or: [{ creator: userId }, { participants: userId }],
+      date: { $lt: new Date() }, // Filtramos eventos pasados
+    })
+      .sort({ date: -1 }) // Ordenamos por fecha de forma descendente
+      .populate("game", "name")
+      .populate("platform", "name icon")
+      .populate("creator", "username avatar");
+
+    if (pastEvents.length === 0) {
+      return res.status(200).json({ message: "No tienes eventos pasados" });
+    }
+
+    return res.status(200).json({
+      total: pastEvents.length,
+      eventos: pastEvents,
+    });
+  } catch (error) {
+    console.error("Error al obtener eventos pasados", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const getEventsToday = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const now = new Date(); // Ahora mismo
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999); // Final del día
+
+    const eventsToday = await Event.find({
+      date: { $gte: now, $lte: endOfToday },
+      $or: [{ creator: userId }, { participants: userId }],
+    })
+      .populate("game", "name")
+      .populate("platform", "name icon")
+      .populate("creator", "username avatar")
+      .sort({ date: 1 });
+
+    if (eventsToday.length === 0) {
+      return res.status(200).json({ message: "No hay eventos para hoy" });
+    }
+
+    return res.status(200).json({
+      total: eventsToday.length,
+      events: eventsToday,
+    });
+  } catch (error) {
+    console.error("Error al obtener eventos de hoy", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const leaveEvent = async (req, res) => {
+  const userId = req.user.id;
+  const { eventId } = req.params; // Obtenemos el id del evento de la url
+
+  try {
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    // Verificamos si el usuario está en la lista de participantes,hacemos un some que devuelve true si el usuario está en el array de participantes y comprobamos si el id del usuario coincide con el id del participante
+    const isParticipants = event.participants.some(
+      (participantId) => participantId.toString() === userId
+    );
+
+    if (!isParticipants) {
+      return res
+        .status(400)
+        .json({ message: "No estás participando en este evento" });
+    }
+
+    // Eliminamos al usuario del array de participantes,filtramos el array de participantes y devolvemos un nuevo array sin el id del usuario que quiere salir del evento
+    event.participants = event.participants.filter(
+      (participantId) => participantId.toString() !== userId
+    );
+    await event.save();
+
+    // marca su solicitud como "cancelada por el usuario"/"cancelledByUser" para el creador del evento lo sepa
+    await JoinEventRequest.findOneAndUpdate(
+      { userRequester: userId, event: eventId }, // buscamos la solicitud donde el usuario que ha solicitado unirse al evento sea el usuario logueado y buscamos el evento por su id
+      { status: "cancelledByUser" }
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Has salido del evento correctamente" });
+  } catch (error) {
+    console.error("Error al salir del evento:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
 module.exports = {
   createEvent,
+  getEvents,
+  getEventById,
+  joinEvent,
+  updateEvent,
+  deleteEvent,
+  getMyEvents,
+  getPastEvents,
+  getEventsToday,
+  leaveEvent,
 };

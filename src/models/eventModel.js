@@ -6,20 +6,12 @@ const eventSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    image: {
-      type: String,
-      required: true,
-    },
     description: {
       type: String,
       required: true,
     },
     date: {
       type: Date,
-      required: true,
-    },
-    hour: {
-      type: String,
       required: true,
     },
     game: {
@@ -43,9 +35,22 @@ const eventSchema = new mongoose.Schema(
       ref: "Platform",
       required: true,
     },
+    maxParticipants: {
+      type: Number,
+      default: null,
+    },
+    requiresApproval: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
 const Event = mongoose.model("Event", eventSchema);
 module.exports = Event;
+
+//  time: {
+//       type: String,
+//       required: true,
+//     },
