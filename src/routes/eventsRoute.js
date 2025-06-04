@@ -7,10 +7,12 @@ const {
   joinEvent,
   updateEvent,
   deleteEvent,
-  getMyEvents,
+  getMyCreatedEvents,
   getPastEvents,
   getEventsToday,
   leaveEvent,
+  getAllMyEvents,
+  getMyJoinedEvents,
 } = require("../controllers/eventController");
 const verifyToken = require("../middlewares/verifyToken");
 
@@ -22,7 +24,9 @@ router.post("/", verifyToken, createEvent); // Crear evento
 router.get("/today", verifyToken, getEventsToday); // Obtener eventos del dia de hoy
 router.put("/:eventId", verifyToken, updateEvent); // Actualizar evento creado por mi
 router.delete("/:eventId", verifyToken, deleteEvent); // Eliminar evento creado por mi
-router.get("/my-events", verifyToken, getMyEvents); // Obtener mis eventos creados
+router.get("/my-events", verifyToken, getAllMyEvents); // Obtener todos los eventos en los que participo (creados por mi o a los que me he unido)
+router.get("/my-events/created", verifyToken, getMyCreatedEvents); // Obtener mis eventos creados
+router.get("/my-events/joined", verifyToken, getMyJoinedEvents); // Obtener eventos en los que me he unido (no creados por mi, solo a los que me he unido)
 router.get("/:eventId", verifyToken, getEventById); // Obtener detalle/acceder a un evento especifico
 router.post("/:eventId/join", verifyToken, joinEvent); // Unirse/solicitar unirse a un evento especifico
 router.delete("/:eventId/leaveEvent", verifyToken, leaveEvent); // Dejar un evento especifico al que ya estamos unidos

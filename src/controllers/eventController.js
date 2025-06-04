@@ -315,23 +315,23 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-const getMyEvents = async (req, res) => {
+const getMyCreatedEvents = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const myEvents = await Event.find({ creator: userId }) // buscamos los eventos creados donde el creador es el usuario logueado
+    const myEventsCreated = await Event.find({ creator: userId }) // buscamos los eventos creados donde el creador es el usuario logueado
       .sort({ date: -1 }) // ordenamos por fecha de creacion,los mas recientes primero (-1 es orden descendente y ordenamos el campo date)
       .populate({ path: "game", select: "name" }) // obtenemos datos del evento y le hacemos populate a game para obtener el nombre del juego
       .populate({ path: "platform", select: "name" });
 
-    if (myEvents.length === 0) {
+    if (myEventsCreated.length === 0) {
       return res
         .status(200)
         .json({ message: "No tienes eventos creados en este momento" });
     }
     return res.status(200).json({
-      total: myEvents.length,
-      eventos: myEvents,
+      total: myEventsCreated.length,
+      eventos: myEventsCreated,
     });
   } catch (error) {
     console.error("Error al obtener tus eventos creados", error);
@@ -440,6 +440,71 @@ const leaveEvent = async (req, res) => {
   }
 };
 
+const getAllMyEvents = async (req, res) => {
+  const userId = req.user.id; // Obtenemos el id del usuario de la peticion, ya que lo guardamos en el token al registrarse o iniciar sesion
+
+  try {
+    const myEvents = await Event.find({
+      // find devuelve un array de eventos que cumplen con la condicion
+      date: { $gte: new Date() }, // Filtramos eventos que ocurren a partir de hoy(evitamos mostrar eventos pasados)
+      // $or permite buscar eventos donde el creador sea el usuario logueado o donde el usuario logueado sea un participante
+      $or: [{ creator: userId, participants: userId }],
+    })
+      .sort({ date: 1 })
+      .populate({ path: "game", select: "name" })
+      .populate({ path: "platform", select: "name icon" })
+      .populate({ path: "creator", select: "username avatar" });
+
+    // OPCION VALIDA TAMBIEN
+    // .populate("game", "name")
+    // .populate("platform", "name icon")
+    // .populate("creator", "username avatar")
+
+    if (!myEvents || myEvents.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json({
+      total: myEvents.length,
+      eventos: myEvents,
+    });
+  } catch (error) {
+    console.error("Error al obtener los eventos", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+const getMyJoinedEvents = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const myEventsJoined = await Event.find({
+      $and: [
+        //$and indica que se deben cumplir todas las condiciones del array
+        { participants: userId }, //condicion 1: el usuario debe estar en el array de participantes
+        { creator: { $ne: userId } }, //condicion 2: el usuario NO debe ser el creador del evento ($ne: no igual)
+        { date: { $gte: new Date() } }, //condicion 3: el evento debe ocurrir a partir de hoy ($gte: mayor o igual que, new Date() devuelve la fecha actual)
+      ],
+    })
+      .sort({ date: 1 })
+      .populate({ path: "game", select: "name" })
+      .populate({ path: "platform", select: "name icon" })
+      .populate({ path: "creator", select: "username avatar" });
+
+    if (!myEventsJoined || myEventsJoined.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json({
+      total: myEventsJoined.length,
+      eventos: myEventsJoined,
+    });
+  } catch (error) {
+    console.error("Error al obtener los eventos", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   createEvent,
   getEvents,
@@ -447,8 +512,10 @@ module.exports = {
   joinEvent,
   updateEvent,
   deleteEvent,
-  getMyEvents,
+  getMyCreatedEvents,
   getPastEvents,
   getEventsToday,
   leaveEvent,
+  getAllMyEvents,
+  getMyJoinedEvents,
 };
