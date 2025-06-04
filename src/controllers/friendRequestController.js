@@ -207,6 +207,74 @@ const getFriends = async (req, res) => {
   }
 };
 
+const deleteFriend = async (req, res) => {
+  const userId = req.userId;
+  const { friendId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+    if (!user || !friend) {
+      return res.status(404).json({ message: "Usuario o amigo no encontrado" });
+    }
+    // Comprobamos si el amigo está en la lista de amigos del usuario
+    const friendIndex = user.friends.findIndex(
+      (f) => f.user.toString() === friendId && f.status === "accepted"
+    );
+    if (friendIndex === -1) {
+      return res.status(404).json({ message: "Amigo no encontrado" });
+    }
+    // Comprobamos si el usuario está en la lista de amigos del amigo
+    const userIndex = friend.friends.findIndex(
+      (f) => f.user.toString() === userId && f.status === "accepted"
+    );
+    if (userIndex === -1) {
+      return res.status(404).json({
+        message: "Usuario no encontrado en la lista de amigos del amigo",
+      });
+    }
+    // Eliminamos el amigo de la lista de amigos del usuario
+    user.friends.splice(friendIndex, 1);
+    // Eliminamos el usuario de la lista de amigos del amigo
+    friend.friends.splice(userIndex, 1);
+    await user.save();
+    await friend.save();
+    return res.status(200).json({ message: "Amigo eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar amigo:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+const deleteMyFriendRequest = async (req, res) => {
+  const userId = req.userId;
+  const { requestId } = req.params;
+
+  try {
+    const request = await FriendRequest.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ message: "Solicitud no encontrada" });
+    }
+    if (request.userSender.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para eliminar esta solicitud" });
+    }
+    if (request.status !== "pending") {
+      return res
+        .status(400)
+        .json({ message: "Solo puedes retirar solicitudes pendientes" });
+    }
+    await FriendRequest.findByIdAndDelete(requestId);
+    return res
+      .status(200)
+      .json({ message: "Solicitud retirada correctamente" });
+  } catch (error) {
+    console.error("Error al retirar solicitud:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   createFriendRequest,
   getFriendRequestsReceived,
@@ -214,4 +282,6 @@ module.exports = {
   acceptFriendRequest,
   rejectFriendRequest,
   getFriends,
+  deleteFriend,
+  deleteMyFriendRequest,
 };

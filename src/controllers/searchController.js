@@ -18,7 +18,9 @@ const searchAll = async (req, res) => {
     const usersPromise = User.find({ username: regex }).select(
       "username avatar"
     );
-    const gamesPromise = Game.find({ name: regex }).select("name imageUrl");
+    const gamesPromise = Game.find({ name: regex }).select(
+      "name imageUrl rawgId"
+    );
     const eventsPromise = Event.find({ title: regex })
       .select("title date game creator")
       .populate("game", "name") // como el campo game es un ObjectId, tenemos que hacer un populate para obtener el nombre del juego, y le decimos que solo queremos el name del juego.
@@ -66,12 +68,12 @@ const searchOnlyUsers = async (req, res) => {
 };
 
 const searchOnlyGames = async (req, res) => {
-  const query = req.query.query;
+  const query = req.query.query; // obtenemos el query de la URL, el query se envia en la URL como ?query=loquesea.
   if (!query) {
     return res.status(200).json({ games: [] });
   }
 
-  const regex = new RegExp(query, "i");
+  const regex = new RegExp(query, "i"); // creamos una expresion regular para buscar en la base de datos, la i es para que no distinga entre mayusculas y minusculas
 
   try {
     const games = await Game.find({ name: regex }).select("name imageUrl");
@@ -106,30 +108,30 @@ const searchOnlyEvents = async (req, res) => {
       .json({ message: "Error al buscar", error: error.message });
   }
 };
-const searchOnlyPlatforms = async (req, res) => {
-  const query = req.query.query;
+// const searchOnlyPlatforms = async (req, res) => {
+//   const query = req.query.query;
 
-  if (!query) {
-    return res.status(200).json({ platforms: [] });
-  }
+//   if (!query) {
+//     return res.status(200).json({ platforms: [] });
+//   }
 
-  const regex = new RegExp(query, "i");
+//   const regex = new RegExp(query, "i");
 
-  try {
-    const platforms = await Platform.find({ name: regex }).select("name icon");
+//   try {
+//     const platforms = await Platform.find({ name: regex }).select("name icon");
 
-    return res.status(200).json({ platforms });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error al buscar", error: error.message });
-  }
-};  
+//     return res.status(200).json({ platforms });
+//   } catch (error) {
+//     return res
+//       .status(500)
+//       .json({ message: "Error al buscar", error: error.message });
+//   }
+// };
 
 module.exports = {
   searchAll,
   searchOnlyUsers,
   searchOnlyGames,
   searchOnlyEvents,
-  searchOnlyPlatforms
+  // searchOnlyPlatforms,
 };

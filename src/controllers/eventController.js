@@ -322,16 +322,38 @@ const getMyCreatedEvents = async (req, res) => {
     const myEventsCreated = await Event.find({ creator: userId }) // buscamos los eventos creados donde el creador es el usuario logueado
       .sort({ date: -1 }) // ordenamos por fecha de creacion,los mas recientes primero (-1 es orden descendente y ordenamos el campo date)
       .populate({ path: "game", select: "name" }) // obtenemos datos del evento y le hacemos populate a game para obtener el nombre del juego
-      .populate({ path: "platform", select: "name" });
+      .populate({ path: "platform", select: "name" })
+      .populate({ path: "creator", select: "username avatar" });
 
     if (myEventsCreated.length === 0) {
       return res
         .status(200)
         .json({ message: "No tienes eventos creados en este momento" });
     }
+    const eventsFormatted = myEventsCreated.map((event) => ({
+      id: event._id.toString(),
+      title: event.title,
+      date: event.date,
+      description: event.description,
+      requiresApproval: event.requiresApproval,
+      maxParticipants: event.maxParticipants,
+      game: {
+        name: event.game.name,
+      },
+      platform: {
+        name: event.platform.name,
+        icon: event.platform.icon,
+      },
+      creator: {
+        username: event.creator.username,
+        avatar: event.creator.avatar,
+      },
+      participants: event.participants.length,
+    }));
+
     return res.status(200).json({
-      total: myEventsCreated.length,
-      eventos: myEventsCreated,
+      total: eventsFormatted.length,
+      eventos: eventsFormatted,
     });
   } catch (error) {
     console.error("Error al obtener tus eventos creados", error);
@@ -463,10 +485,30 @@ const getAllMyEvents = async (req, res) => {
     if (!myEvents || myEvents.length === 0) {
       return res.status(200).json([]);
     }
+    const eventsFormatted = myEvents.map((event) => ({
+      id: event._id.toString(),
+      title: event.title,
+      date: event.date,
+      description: event.description,
+      requiresApproval: event.requiresApproval,
+      maxParticipants: event.maxParticipants,
+      game: {
+        name: event.game.name,
+      },
+      platform: {
+        name: event.platform.name,
+        icon: event.platform.icon,
+      },
+      creator: {
+        username: event.creator.username,
+        avatar: event.creator.avatar,
+      },
+      participants: event.participants.length,
+    }));
 
     return res.status(200).json({
-      total: myEvents.length,
-      eventos: myEvents,
+      total: eventsFormatted.length,
+      eventos: eventsFormatted,
     });
   } catch (error) {
     console.error("Error al obtener los eventos", error);
@@ -495,9 +537,30 @@ const getMyJoinedEvents = async (req, res) => {
       return res.status(200).json([]);
     }
 
+    const eventsFormatted = myEventsJoined.map((event) => ({
+      id: event._id.toString(),
+      title: event.title,
+      date: event.date,
+      description: event.description,
+      requiresApproval: event.requiresApproval,
+      maxParticipants: event.maxParticipants,
+      game: {
+        name: event.game.name,
+      },
+      platform: {
+        name: event.platform.name,
+        icon: event.platform.icon,
+      },
+      creator: {
+        username: event.creator.username,
+        avatar: event.creator.avatar,
+      },
+      participants: event.participants.length,
+    }));
+
     return res.status(200).json({
-      total: myEventsJoined.length,
-      eventos: myEventsJoined,
+      total: eventsFormatted.length,
+      eventos: eventsFormatted,
     });
   } catch (error) {
     console.error("Error al obtener los eventos", error);

@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
           type: String,
           enum: ["pending", "accepted", "rejected"],
           default: "pending",
-        },
+        }, //POSIBLEMENTE SOBRA STATUS
         requestedAt: {
           type: Date,
           default: Date.now,

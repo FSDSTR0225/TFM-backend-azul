@@ -5,7 +5,7 @@ const {
   searchOnlyUsers,
   searchOnlyGames,
   searchOnlyEvents,
-  searchOnlyPlatforms
+  // searchOnlyPlatforms
 } = require("../controllers/searchController");
 const { route } = require("./profileRoute");
 
