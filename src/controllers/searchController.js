@@ -107,25 +107,26 @@ const searchOnlyEvents = async (req, res) => {
       .json({ message: "Error al buscar", error: error.message });
   }
 };
-// const searchOnlyPlatforms = async (req, res) => {
-//   const query = req.query.query;
 
-//   if (!query) {
-//     return res.status(200).json({ platforms: [] });
-//   }
+const searchOnlyPlatforms = async (req, res) => {
+  const query = req.query.query;
 
-//   const regex = new RegExp(query, "i");
+  if (!query) {
+    return res.status(200).json({ platforms: [] });
+  }
 
-//   try {
-//     const platforms = await Platform.find({ name: regex }).select("name icon");
+  const regex = new RegExp(query, "i");
 
-//     return res.status(200).json({ platforms });
-//   } catch (error) {
-//     return res
-//       .status(500)
-//       .json({ message: "Error al buscar", error: error.message });
-//   }
-// };
+  try {
+    const platforms = await Platform.find({ name: regex }).select("name icon");
+
+    return res.status(200).json({ platforms });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error al buscar", error: error.message });
+  }
+};
 
 module.exports = {
   searchAll,
