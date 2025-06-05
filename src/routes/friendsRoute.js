@@ -12,6 +12,7 @@ const {
 } = require("../controllers/friendRequestController");
 const verifyToken = require("../middlewares/verifyToken");
 
+router.get("/", verifyToken, getFriends);
 router.post("/requests", verifyToken, createFriendRequest); // enviar solicitud de amistad
 router.get("/requests/received", verifyToken, getFriendRequestsReceived); // obtener solicitudes de amistad recibidas
 router.get("/requests/sent", verifyToken, getFriendRequestsSent); // obtener solicitudes de amistad enviadas

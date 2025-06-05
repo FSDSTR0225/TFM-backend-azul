@@ -47,17 +47,16 @@ const searchAll = async (req, res) => {
 };
 
 const searchOnlyUsers = async (req, res) => {
-  const query = req.query.query;
+  const query = req.query.query; //obtenemos el query de la URL, el query se envia en la URL como ?query=loquesea o como /users/:username
 
   if (!query) {
     return res.status(200).json({ users: [] }); //si no hay query devolvemos un array vacio
   }
 
-  const regex = new RegExp(query, "i"); //creamos una expresion regular para buscar en la base de datos, la i es para que no distinga entre mayusculas y minusculas
   try {
-    const users = await User.find({ username: regex }).select(
-      "username avatar"
-    ); //buscamos en la base de datos los usuarios que coincidan con el query (el username que se escribe en el input de busqueda), y le decimos que solo queremos el username y avatar de los usuarios.
+    const users = await User.find({
+      username: { $regex: query, $options: "i" },
+    }).select("username avatar"); //buscamos en la base de datos los usuarios que coincidan con el query (el username que se escribe en el input de busqueda), y le decimos que solo queremos el username y avatar de los usuarios.
 
     return res.status(200).json({ users }); //devolvemos los resultados con los usuarios encontrados que coincidan con la busqueda.
   } catch (error) {
@@ -73,10 +72,10 @@ const searchOnlyGames = async (req, res) => {
     return res.status(200).json({ games: [] });
   }
 
-  const regex = new RegExp(query, "i"); // creamos una expresion regular para buscar en la base de datos, la i es para que no distinga entre mayusculas y minusculas
-
   try {
-    const games = await Game.find({ name: regex }).select("name imageUrl");
+    const games = await Game.find({
+      name: { $regex: query, $options: "i" },
+    }).select("name imageUrl");
 
     return res.status(200).json({ games });
   } catch (error) {
@@ -120,18 +119,18 @@ const searchOnlyEvents = async (req, res) => {
 //   try {
 //     const platforms = await Platform.find({ name: regex }).select("name icon");
 
-//     return res.status(200).json({ platforms });
-//   } catch (error) {
-//     return res
-//       .status(500)
-//       .json({ message: "Error al buscar", error: error.message });
-//   }
-// };
+    return res.status(200).json({ platforms });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error al buscar", error: error.message });
+  }
+};
 
 module.exports = {
   searchAll,
   searchOnlyUsers,
   searchOnlyGames,
   searchOnlyEvents,
-  // searchOnlyPlatforms,
+  searchOnlyPlatforms,
 };
