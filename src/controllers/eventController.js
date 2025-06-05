@@ -91,6 +91,7 @@ const getEvents = async (req, res) => {
 
 const getEventById = async (req, res) => {
   const { eventId } = req.params; // Obtenemos el id del evento de la url
+  const userId = req.user.id; // Obtenemos el id del usuario para saber quien esta logueado y accede a ese evento
 
   try {
     const event = await Event.findById(eventId) // Buscamos el evento por su id y lo llenamos con los datos de la base de datos,hacemos populate de los datos que queremos obtener de la base de datos.
@@ -101,6 +102,11 @@ const getEventById = async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: "Evento no encontrado" });
     }
+
+    // comprobamos si la peticion de unirse al evento ya existe, hacemos una busqueda en JoinEventRequest para ver si ya existe una solicitud de unirse al evento,buscamos que cumpla que sea del user logueado y que sea a este evento(Eventid)
+    const existingRequest = await JoinEventRequest.findOne({
+      $and: [{ userRequester: userId }, { event: eventId }],
+    });
 
     const currentEvent = {
       // al evento le añadimos los datos que queremos devolver al cliente,para mostrarlo en el frontend
@@ -125,7 +131,9 @@ const getEventById = async (req, res) => {
       requiresApproval: event.requiresApproval,
       maxParticipants: event.maxParticipants,
       numberParticipants: event.participants.length,
+      hasPendingRequest: existingRequest ? true : false, // añadimos el campo hasPendingRequest para saber si el usuario logueado ya ha solicitado unirse al evento, si existe la solicitud, devolvemos true, sino false y asi lo podemos gestionar en el frontend
     };
+
     return res.status(200).json({
       message: "Evento obtenido correctamente",
       currentEvent,
@@ -319,10 +327,12 @@ const getMyCreatedEvents = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const myEventsCreated = await Event.find({ creator: userId }) // buscamos los eventos creados donde el creador es el usuario logueado
+    const myEventsCreated = await Event.find({
+      $and: [{ creator: userId }, { date: { $gte: new Date() } }],
+    }) // buscamos los eventos creados donde el creador es el usuario logueado
       .sort({ date: -1 }) // ordenamos por fecha de creacion,los mas recientes primero (-1 es orden descendente y ordenamos el campo date)
       .populate({ path: "game", select: "name" }) // obtenemos datos del evento y le hacemos populate a game para obtener el nombre del juego
-      .populate({ path: "platform", select: "name" })
+      .populate({ path: "platform", select: "name icon" })
       .populate({ path: "creator", select: "username avatar" });
 
     if (myEventsCreated.length === 0) {
@@ -470,7 +480,7 @@ const getAllMyEvents = async (req, res) => {
       // find devuelve un array de eventos que cumplen con la condicion
       date: { $gte: new Date() }, // Filtramos eventos que ocurren a partir de hoy(evitamos mostrar eventos pasados)
       // $or permite buscar eventos donde el creador sea el usuario logueado o donde el usuario logueado sea un participante
-      $or: [{ creator: userId, participants: userId }],
+      $or: [{ creator: userId }, { participants: userId }],
     })
       .sort({ date: 1 })
       .populate({ path: "game", select: "name" })
