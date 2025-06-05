@@ -34,12 +34,14 @@ const getUserByUsername = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-   const userId = req.user.id; // Obtenemos el userId del token decodificado en el middleware verifyToken
+    const userId = req.user.id; // Obtenemos el userId del token decodificado en el middleware verifyToken
     const user = await User.findById(userId) // Buscamos al usuario por su ID
-      .select("username avatar favoriteGames platforms availability friends email")
+      .select(
+        "username avatar favoriteGames platforms availability friends email"
+      )
       .populate("favoriteGames", "name imageUrl")
       .populate("platforms", "name icon")
-      .populate("friends", "username avatar");
+      .populate("friends.user", "username avatar");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -50,8 +52,7 @@ const getMe = async (req, res) => {
     console.error("❌ Errore in getMe:", err);
     return res.status(500).json({ message: "Server error" });
   }
-}
-
+};
 
 module.exports = {
   getUsers,

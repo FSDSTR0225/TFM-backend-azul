@@ -24,21 +24,14 @@ const userSchema = new mongoose.Schema(
     },
     friends: [
       {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        status: {
-          type: String,
-          enum: ["pending", "accepted", "rejected"],
-          default: "pending",
-        }, //POSIBLEMENTE SOBRA STATUS
-        requestedAt: {
-          type: Date,
-          default: Date.now,
-        },
+       user : { type: mongoose.Schema.Types.ObjectId,  ref: "User"},
+       since : {
+         type: Date,
+         default: Date.now,
+       },
       },
     ],
+
     ratings: [
       {
         event: {
@@ -76,6 +69,7 @@ const userSchema = new mongoose.Schema(
     availability: {
       type: String,
       default: "No disponible",
+      enum:["No disponible", "Mañana", "Tarde", "Noche", "Todo el día"],
     },
   },
   { timestamps: true }

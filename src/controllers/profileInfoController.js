@@ -8,7 +8,7 @@ const editProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const { username, email,oldPassword, newPassword, avatar } = req.body;
+    const { username, email,oldPassword, newPassword, avatar ,availability} = req.body;
        if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       return res.status(400).json({ message: "Email non valida" });
     }
@@ -18,6 +18,8 @@ const editProfile = async (req, res) => {
     if (username) user.username = username;
     if (email) user.email = email;
     if (avatar) user.avatar = avatar;
+    if (availability) user.availability = availability;
+    // If newPassword is provided, check oldPassword and hash newPassword
     if (newPassword) {
       const isMatch = await bcrypt.compare(oldPassword, user.password);
       if (!isMatch) {

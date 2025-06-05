@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const FriendRequest = require("../models/friendRequestModel");
 
 const createFriendRequest = async (req, res) => {
-  const userSender = req.userId; // Obtenemos el id del usuario que está haciendo la solicitud
+  const userSender = req.user.id; // Obtenemos el id del usuario que está haciendo la solicitud
   const { userReceiverId, message } = req.body; // Obtenemos el id del receptor y el mensaje de la solicitud
 
   if (userSender === userReceiverId) {
@@ -52,11 +52,11 @@ const createFriendRequest = async (req, res) => {
 };
 
 const getFriendRequestsReceived = async (req, res) => {
-  const userReceiver = req.userId;
+  const userReceiver = req.user.id;
 
   try {
     const allRequestReceived = await FriendRequest.find({
-      userReceiver: req.userId,
+      userReceiver: userReceiver,
       status: "pending",
     })
       .populate("userSender", "username avatar")
@@ -77,11 +77,11 @@ const getFriendRequestsReceived = async (req, res) => {
 };
 
 const getFriendRequestsSent = async (req, res) => {
-  const userSender = req.userId;
+  const userSender = req.user.id;
 
   try {
     const allRequestSent = await FriendRequest.find({
-      userSender: req.userId,
+      userSender: userSender,
       status: "pending",
     })
       .populate("userReceiver", "username avatar")
@@ -102,7 +102,7 @@ const getFriendRequestsSent = async (req, res) => {
 };
 
 const acceptFriendRequest = async (req, res) => {
-  const receiverId = req.userId;
+  const receiverId = req.user.id;
   const { requestId } = req.params;
 
   try {
@@ -134,19 +134,23 @@ const acceptFriendRequest = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const senderIsFriend = sender.friends.some(
-      (friend) => friend.user.toString() === receiver._id.toString()
-    );
-    const receiverIsFriend = receiver.friends.some(
-      (friend) => friend.user.toString() === sender._id.toString()
-    );
+  const senderIsFriend = sender.friends.some(
+  (friendId) => friendId.toString() === receiver._id.toString()
+);
 
-    if (!senderIsFriend) {
-      sender.friends.push({ user: receiver._id, status: "accepted" });
-    }
-    if (!receiverIsFriend) {
-      receiver.friends.push({ user: sender._id, status: "accepted" });
-    }
+const receiverIsFriend = receiver.friends.some(
+  (friendId) => friendId.toString() === sender._id.toString()
+);
+
+
+if (!senderIsFriend) {
+  sender.friends.push({ user: receiver._id });
+}
+if (!receiverIsFriend) {
+  receiver.friends.push({ user: sender._id });
+}
+
+
     await sender.save();
     await receiver.save();
     await findRequest.save();
@@ -161,7 +165,7 @@ const acceptFriendRequest = async (req, res) => {
 };
 
 const rejectFriendRequest = async (req, res) => {
-  const receiverId = req.userId;
+  const receiverId = req.user.id;
   const { requestId } = req.params;
 
   try {
@@ -197,7 +201,7 @@ const rejectFriendRequest = async (req, res) => {
 
 const getFriends = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).populate("friends.user");
+    const user = await User.findById(req.user.id).populate("friends" , "username avatar");
 
     const acceptedFriends = user.friends.filter((f) => f.status === "accepted");
 
