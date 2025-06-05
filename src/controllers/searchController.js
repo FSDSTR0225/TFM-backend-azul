@@ -119,13 +119,13 @@ const searchOnlyEvents = async (req, res) => {
 //   try {
 //     const platforms = await Platform.find({ name: regex }).select("name icon");
 
-    return res.status(200).json({ platforms });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error al buscar", error: error.message });
-  }
-};
+//     return res.status(200).json({ platforms });
+//   } catch (error) {
+//     return res
+//       .status(500)
+//       .json({ message: "Error al buscar", error: error.message });
+//   }
+// };
 
 module.exports = {
   searchAll,
