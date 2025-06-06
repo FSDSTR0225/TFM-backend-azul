@@ -237,8 +237,8 @@ const deleteFriend = async (req, res) => {
       });
     }
     await FriendRequest.findOneAndDelete({
-      userSender: userId,
-      userReceiver: friendId,
+      userSender: userId||friendId, // Buscamos la solicitud de amistad entre el usuario y el amigo
+      userReceiver: friendId||userId,
     }); // Buscamos la solicitud de amistad entre el usuario y el friendRequest
     // Eliminamos el amigo de la lista de amigos del usuario
     user.friends.splice(friendIndex, 1);
