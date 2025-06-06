@@ -134,22 +134,20 @@ const acceptFriendRequest = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-  const senderIsFriend = sender.friends.some(
-  (friendId) => friendId.toString() === receiver._id.toString()
-);
+    const senderIsFriend = sender.friends.some(
+      (friendId) => friendId.toString() === receiver._id.toString()
+    );
 
-const receiverIsFriend = receiver.friends.some(
-  (friendId) => friendId.toString() === sender._id.toString()
-);
+    const receiverIsFriend = receiver.friends.some(
+      (friendId) => friendId.toString() === sender._id.toString()
+    );
 
-
-if (!senderIsFriend) {
-  sender.friends.push({ user: receiver._id });
-}
-if (!receiverIsFriend) {
-  receiver.friends.push({ user: sender._id });
-}
-
+    if (!senderIsFriend) {
+      sender.friends.push({ user: receiver._id });
+    }
+    if (!receiverIsFriend) {
+      receiver.friends.push({ user: sender._id });
+    }
 
     await sender.save();
     await receiver.save();
@@ -201,18 +199,19 @@ const rejectFriendRequest = async (req, res) => {
 
 const getFriends = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("friends" , "username avatar");
+    const user = await User.findById(req.user.id).populate(
+      "friends",
+      "username avatar"
+    );
 
-    const acceptedFriends = user.friends.filter((f) => f.status === "accepted");
-
-    return res.json({ friends: acceptedFriends });
+    return res.json({ friends: user.friends });
   } catch (err) {
     return res.status(500).json({ message: "Error al obtener amigos" });
   }
 };
 
 const deleteFriend = async (req, res) => {
-  const userId = req.userId;
+  const userId = req.user.id;
   const { friendId } = req.params;
 
   try {
@@ -223,20 +222,24 @@ const deleteFriend = async (req, res) => {
     }
     // Comprobamos si el amigo está en la lista de amigos del usuario
     const friendIndex = user.friends.findIndex(
-      (f) => f.user.toString() === friendId && f.status === "accepted"
+      (f) => f.user.toString() === friendId
     );
     if (friendIndex === -1) {
       return res.status(404).json({ message: "Amigo no encontrado" });
     }
     // Comprobamos si el usuario está en la lista de amigos del amigo
     const userIndex = friend.friends.findIndex(
-      (f) => f.user.toString() === userId && f.status === "accepted"
+      (f) => f.user.toString() === userId
     );
     if (userIndex === -1) {
       return res.status(404).json({
         message: "Usuario no encontrado en la lista de amigos del amigo",
       });
     }
+    await FriendRequest.findOneAndDelete({
+      userSender: userId,
+      userReceiver: friendId,
+    }); // Buscamos la solicitud de amistad entre el usuario y el friendRequest
     // Eliminamos el amigo de la lista de amigos del usuario
     user.friends.splice(friendIndex, 1);
     // Eliminamos el usuario de la lista de amigos del amigo
@@ -251,7 +254,7 @@ const deleteFriend = async (req, res) => {
 };
 
 const deleteMyFriendRequest = async (req, res) => {
-  const userId = req.userId;
+  const userId = req.user.id;
   const { requestId } = req.params;
 
   try {
