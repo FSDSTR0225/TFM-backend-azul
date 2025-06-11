@@ -10,10 +10,11 @@ const {
   deleteFriend,
   deleteMyFriendRequest,
 } = require("../controllers/friendRequestController");
+const { getOnlineFriends } = require("../controllers/friendsController");
 const verifyToken = require("../middlewares/verifyToken");
 
-
 router.get("/", verifyToken, getFriends); //ver listado de amigos del usuario autenticado
+router.get("/online", verifyToken, getOnlineFriends); //ver listado de amigos online del usuario autenticado.
 router.post("/requests", verifyToken, createFriendRequest); // enviar solicitud de amistad
 router.get("/requests/received", verifyToken, getFriendRequestsReceived); // obtener solicitudes de amistad recibidas
 router.get("/requests/sent", verifyToken, getFriendRequestsSent); // obtener solicitudes de amistad enviadas

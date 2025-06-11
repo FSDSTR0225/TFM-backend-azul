@@ -71,6 +71,10 @@ const userSchema = new mongoose.Schema(
       default: "No disponible",
       enum: ["No disponible", "Mañana", "Tarde", "Noche", "Todo el día"],
     },
+    onlineStatus: {
+      type: Boolean,
+      default: false, // Por defecto, el usuario no está online
+    },
   },
   { timestamps: true }
 );
