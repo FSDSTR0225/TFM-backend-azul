@@ -2,12 +2,39 @@ const User = require("../models/userModel");
 require("dotenv").config();
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find()
-      .select("username avatar favoriteGames platforms") // añado el select para que cuando muestre todos los usuarios solo venga esta info y no email,password...)
-      .populate("favoriteGames", "name , imageUrl") // añado el populate para que de eso que viene me de solo el name.
-      .populate("platforms", "name, icon");
-    res.json(users);
+    // Obtener los parámetros de paginación desde la query
+    const page = parseInt(req.query.page) || 1; // Página actual, por defecto 1
+    const limit = parseInt(req.query.limit) || 10; // Límite de resultados por página, por defecto 10
+    const skip = (page - 1) * limit; // Cálculo para saltar registros
+
+    const userId = req.user.id; // Obtiene el ID del usuario actual desde el token
+    const { game, platform, time } = req.query; //  Obtener filtros de la URL
+    // Construir el objeto de filtros dinámicamente
+    let filters = { _id: { $ne: userId } };
+    // Contar el número total de jugadores que cumplen los filtros
+    const totalUsers = await User.countDocuments(filters);
+
+    console.log("Filtros recibidos:", { game, platform, time });
+
+    if (game) filters["favoriteGames"] = game; //  Filtrar por juego
+    if (platform) filters["platforms"] = platform; //  Filtrar por plataforma
+    if (time) filters["availability"] = time; //  Filtrar por horario
+
+    // Buscar los usuarios aplicando paginación
+    const users = await User.find(filters) // Excluye el usuario actual
+      .select("username avatar favoriteGames platforms availability") // Selecciona los campos a devolver
+      .populate("favoriteGames", "name , imageUrl")
+      .populate("platforms", "name, icon")
+      .sort({ _id: 1 }) // Ordena los jugadores de forma ascendente por ID
+
+      .skip(skip) // Salta los usuarios de páginas anteriores
+      .limit(limit); // Limita la cantidad de resultados
+
+    // Enviar la respuesta con los usuarios y el total de usuarios
+    res.json({ users, totalUsers });
   } catch (error) {
+    console.error("Error en getUsers:", error);
+
     res.status(500).json({ error: "Error al obtener los usuarios" });
   }
 };
