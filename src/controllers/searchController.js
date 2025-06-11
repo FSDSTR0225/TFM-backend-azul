@@ -21,7 +21,11 @@ const searchAll = async (req, res) => {
     const gamesPromise = Game.find({ name: regex }).select(
       "name imageUrl rawgId"
     );
-    const eventsPromise = Event.find({ title: regex })
+
+    const today = new Date();
+    const eventsPromise = Event.find({
+      $and: [{ title: regex }, { date: { $gte: today } }],
+    })
       .select("title date game creator")
       .populate("game", "name") // como el campo game es un ObjectId, tenemos que hacer un populate para obtener el nombre del juego, y le decimos que solo queremos el name del juego.
       .populate("creator", "username");
@@ -75,7 +79,7 @@ const searchOnlyGames = async (req, res) => {
   try {
     const games = await Game.find({
       name: { $regex: query, $options: "i" },
-    }).select("name imageUrl");
+    }).select("name imageUrl rawgId"); // buscamos en la base de datos los juegos que coincidan con el query (el nombre del juego que se escribe en el input de busqueda), y le decimos que solo queremos el name, imageUrl y rawgId de los juegos.
 
     return res.status(200).json({ games });
   } catch (error) {
@@ -95,7 +99,10 @@ const searchOnlyEvents = async (req, res) => {
   const regex = new RegExp(query, "i");
 
   try {
-    const events = await Event.find({ title: regex })
+    const today = new Date(); // Obtenemos la fecha actual para filtrar los eventos que ocurren a partir de hoy.
+    const events = await Event.find({
+      $and: [{ title: regex }, { date: { $gte: today } }],
+    })
       .select("title date game creator")
       .populate("game", "name")
       .populate("creator", "username");

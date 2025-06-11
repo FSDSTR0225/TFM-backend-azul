@@ -385,7 +385,7 @@ const getPastEvents = async (req, res) => {
       .populate("creator", "username avatar");
 
     if (pastEvents.length === 0) {
-      return res.status(200).json({ message: "No tienes eventos pasados" });
+      return res.status(200).json({ total: 0, eventos: [] });
     }
 
     return res.status(200).json({

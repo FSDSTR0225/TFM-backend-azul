@@ -90,6 +90,15 @@ const getGameById = async (req, res) => {
       "name slug"
     ); // Buscamos el juego por su RawgId en la base de datos (juegos cuya rawgId=Id de url),y no buscamos por findById porque no buscamos _.id de mongo sino la rawgId ya almacenada, y con el populate llenamos la propiedad platforms con el nombre y slug de la plataforma(no solo el id de la paltaforma que devolveria el juego).
 
+    // Si el juego existe en la base de datos, lo devolvemos.
+    // Si no existe en la base de datos, buscamos por id de mongo, ya que puede que el juego no tenga rawgId pero si id de mongo.
+    if (!gameFromMongo && mongoose.Types.ObjectId.isValid(id)) {
+      gameFromMongo = await Game.findById(id).populate(
+        "platforms",
+        "name slug"
+      );
+    }
+
     // Comprobamos si el juego necesita ser actualizado,
     // si no existe o si no tiene descripcion o desarrolladores o esrbRating.
     const needsUpdate =
