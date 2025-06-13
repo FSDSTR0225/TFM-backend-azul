@@ -250,6 +250,7 @@ const joinEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   const { eventId } = req.params;
   const userId = req.user.id; // Obtenemos el id del usuario de la peticion, ya que lo guardamos en el token al registrarse o iniciar sesion
+
   const {
     id,
     title,
@@ -289,9 +290,20 @@ const updateEvent = async (req, res) => {
 
     await event.save();
 
+    const populatedEvent = await Event.findById(eventId)
+      .populate("game")
+      .populate("platform")
+      .populate("participants", "username avatar");
+
     return res
       .status(200)
-      .json({ message: "Evento actualizado", updatedEvent: event });
+      .json({
+        message: "Evento actualizado",
+        updatedEvent: {
+          ...populatedEvent.toObject(),
+          id: populatedEvent._id.toString(),
+        },
+      });
   } catch (error) {
     console.error("Error al editar el evento", error);
     return res.status(500).json({ error: error.message });
