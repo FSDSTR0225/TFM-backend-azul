@@ -79,9 +79,15 @@ const searchOnlyGames = async (req, res) => {
   try {
     const games = await Game.find({
       name: { $regex: query, $options: "i" },
-    }).select("name imageUrl rawgId"); // buscamos en la base de datos los juegos que coincidan con el query (el nombre del juego que se escribe en el input de busqueda), y le decimos que solo queremos el name, imageUrl y rawgId de los juegos.
+    })
+      .select("name imageUrl rawgId")
+      .lean(); // buscamos en la base de datos los juegos que coincidan con el query (el nombre del juego que se escribe en el input de busqueda), y le decimos que solo queremos el name, imageUrl y rawgId de los juegos.
+    // .lean() convierte el resultado en un objeto JavaScript simple, lo que mejora el rendimiento al no tener que crear instancias de Mongoose.
 
-    return res.status(200).json({ games });
+    const filteredGames = games.filter(
+      (g) => g.name && typeof g.name === "string"
+    );
+    return res.status(200).json({ games: filteredGames }); // devolvemos los resultados con los juegos encontrados que coincidan con la busqueda.
   } catch (error) {
     return res
       .status(500)

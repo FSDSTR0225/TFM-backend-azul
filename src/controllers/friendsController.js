@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 
 const addFriend = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id;
     const friendsId = req.body.friendsIds;
 
     const user = await User.findById(userId);
@@ -58,7 +58,38 @@ const deleteFriend = async (req, res) => {
   }
 };
 
+const getOnlineFriends = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const user = await User.findById(userId).populate(
+      "friends.user",
+      "username avatar onlineStatus"
+    );
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    const onlineFriends = user.friends.filter(
+      (friend) => friend.user && friend.user.onlineStatus === true
+    );
+
+    return res.status(200).json({
+      onlineFriends: onlineFriends.map((friend) => ({
+        id: friend.user._id,
+        username: friend.user.username,
+        avatar: friend.user.avatar,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error al obtener amigos en línea",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addFriend,
   deleteFriend,
+  getOnlineFriends,
 };

@@ -22,7 +22,7 @@ const getGames = async (req, res) => {
 
     // Si no hay juegos en Mongo para esta página, llamar a RAWG en el mismo orden que en Mongo(paginación y orden alfabético)
     const response = await fetch(
-      `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added`
+      `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added&lang=es`
     );
 
     if (!response.ok) {
@@ -112,7 +112,7 @@ const getGameById = async (req, res) => {
     }
 
     const response = await fetch(
-      `https://api.rawg.io/api/games/${id}?key=${API_KEY}`
+      `https://api.rawg.io/api/games/${id}?key=${API_KEY}&lang=es`
     ); // Si no existe en la base de datos, lo buscamos en la API de RAWG.
 
     if (!response.ok) {
@@ -177,8 +177,11 @@ const getGameById = async (req, res) => {
       }
     ); // updateOne busca el juego por su rawgId, y si lo encuentra lo actualiza con los datos que hemos recogido de la api, y si no lo encuentra lo crea con esos datos.
     // upsert: true significa que si no existe el juego, lo crea con los datos que le pasamos.(update + insert) y new:true significa que nos devuleva el juego actualizado y no el antiguo.
-
-    return res.status(200).json(updatedGame); // Devolvemos el juego obtenido de la Api.
+    const populatedGame = await Game.findById(updatedGame._id).populate(
+      "platforms",
+      "name slug"
+    );
+    return res.status(200).json(populatedGame); // Devolvemos el juego obtenido de la Api.
   } catch (error) {
     console.error("Error en getGameById:", error); // Si hay un error, lo mostramos por consola.
     res.status(500).json({ error: error.message });
