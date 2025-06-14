@@ -23,14 +23,19 @@ io.on("connection", (socket) => {
 
   // Cuando un usuario se conecta, actualizamos su estado a online y guardamos su ID en el socket para usarlo al desconectarse
   socket.on("userConnect", async (userId) => {
+    socket.userId = userId; // lo guardamos en el socket para usarlo al desconectarse
+    if (!userId) return;
+
     try {
       const user = await User.findByIdAndUpdate(
         userId,
         { onlineStatus: true },
-        { new: true, select: "username onlineStatus" }
-      ); //buscamos al usuario por su ID y actualizamos su estado a online
+        { new: true, select: "username onlineStatus" } // primero buscamos al usuario por su ID y actualizamos su estado a online,
+        // luego le decimos que nos devuelva el usuario actualizado con new: true y que solo queremos el username y onlineStatus.
+      );
+
       console.log(`Usuario ${userId} está en línea`);
-      socket.userId = userId; // lo guardamos en el socket para usarlo al desconectarse
+
       socket.broadcast.emit("userConnected", {
         message: `Usuario ${user.username} está en línea`,
         userId: user._id,
@@ -48,7 +53,8 @@ io.on("connection", (socket) => {
 
   //Desconexion automática
   socket.on("disconnect", async () => {
-    console.log("Un usuario se ha desconectado");
+    const userId = socket.userId;
+    if (!userId) return;
 
     try {
       //al desconectarse,si el el socket.userId existe cambiamos el estado del usuario a offline
@@ -61,20 +67,11 @@ io.on("connection", (socket) => {
     }
   });
 
-  //Desconexión manual
-  socket.on("userDisconnected", async (userId) => {
-    try {
-      await User.findByIdAndUpdate(userId, { onlineStatus: false });
-      console.log(`Usuario ${userId} se ha desconectado manualmente`);
-    } catch (error) {
-      console.error("Error al desconectar manualmente:", error);
-    }
-  });
-
   socket.on("chat message", (msg) => {
     io.emit("chat message", msg);
   });
 });
+
 // Conexión a la base de datos
 connectDB();
 
