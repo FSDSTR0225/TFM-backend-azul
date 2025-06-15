@@ -46,8 +46,8 @@ const addWidget = async (req, res) => {
 
   // Tamaños por defecto según el tipo
   const defaultSizes = {
-    friends: { w: 3, h: 2 },
-    calendar: { w: 2, h: 3 },
+    friends: { w: 3, h: 3 },
+    calendar: { w: 3, h: 3 },
     gamification: { w: 4, h: 2 },
     userSuggestions: { w: 3, h: 2 },
     eventSuggestions: { w: 3, h: 2 },
