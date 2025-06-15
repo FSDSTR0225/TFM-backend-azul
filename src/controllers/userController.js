@@ -42,7 +42,9 @@ const getUsers = async (req, res) => {
 const getUserByUsername = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username }) // Buscamos el usuario por username
-      .select("username avatar favoriteGames platforms aviability") // Elegimos los campos a devolver de la ficha publica
+      .select(
+        "username avatar favoriteGames platforms aviability favoriteTags ratings"
+      ) // Elegimos los campos a devolver de la ficha publica
       .populate("favoriteGames", "name")
       .populate("platforms", "name"); // Elegimos que de favoritesGames  y platform se vea el nombre
 
@@ -64,7 +66,7 @@ const getMe = async (req, res) => {
     const userId = req.user.id; // Obtenemos el userId del token decodificado en el middleware verifyToken
     const user = await User.findById(userId) // Buscamos al usuario por su ID
       .select(
-        "username avatar favoriteGames platforms availability friends email"
+        "username avatar favoriteGames platforms availability friends email favoriteTags ratings" // Seleccionamos los campos que queremos devolver
       )
       .populate("favoriteGames", "name imageUrl")
       .populate("platforms", "name icon")

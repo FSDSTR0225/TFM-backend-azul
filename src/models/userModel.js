@@ -75,6 +75,28 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // Por defecto, el usuario no está online
     },
+    favoriteTags: {
+      genres: [
+        {
+          type: String,
+        },
+      ],
+      modes: [
+        {
+          type: String,
+        },
+      ],
+      themes: [
+        {
+          type: String,
+        },
+      ],
+      others: [
+        {
+          type: String,
+        },
+      ],
+    },
   },
   { timestamps: true }
 );
