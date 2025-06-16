@@ -221,10 +221,13 @@ const deleteWidget = async (req, res) => {
   }
 };
 
+const getSuggestionsUsers = async (req, res) => {};
+
 module.exports = {
   getWidgetConfig,
   addWidget,
   updateWidget,
   updateMultiWidgets,
   deleteWidget,
+  getSuggestionsUsers,
 };

@@ -7,7 +7,7 @@ const API_KEY = process.env.RAWG_API_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 
 const startPage = 1;
-const endPage = 100; // Cambio esto si queremos más páginas (200 primeras paginas exportadas)
+const endPage = 50; // Cambio esto si queremos más páginas (200 primeras paginas exportadas)
 const pageSize = 25;
 
 async function importGames() {
@@ -22,7 +22,7 @@ async function importGames() {
       console.log(` Página ${page}...`);
 
       const res = await fetch(
-        `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added&lang=es`
+        `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added`
       );
       const data = await res.json();
 
@@ -31,7 +31,7 @@ async function importGames() {
           const game = data.results[i];
 
           const detailsRes = await fetch(
-            `https://api.rawg.io/api/games/${game.id}?key=${API_KEY}&lang=es`
+            `https://api.rawg.io/api/games/${game.id}?key=${API_KEY}`
           );
           const detailsData = await detailsRes.json();
 
@@ -59,7 +59,7 @@ async function importGames() {
             screenshots: game.short_screenshots?.map((s) => s.image) || [],
             tags: game.tags?.map((t) => t.name) || [],
             background_image_additional:
-              game.background_image_additional || null,
+              detailsData.background_image_additional || null,
             clip: game.clip?.clip,
             released: game.released,
             stores: game.stores?.map((s) => s.store.name) || [],

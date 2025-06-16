@@ -22,7 +22,7 @@ const getGames = async (req, res) => {
 
     // Si no hay juegos en Mongo para esta página, llamar a RAWG en el mismo orden que en Mongo(paginación y orden alfabético)
     const response = await fetch(
-      `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added&lang=es`
+      `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added&`
     );
 
     if (!response.ok) {
@@ -112,7 +112,7 @@ const getGameById = async (req, res) => {
     }
 
     const response = await fetch(
-      `https://api.rawg.io/api/games/${id}?key=${API_KEY}&lang=es`
+      `https://api.rawg.io/api/games/${id}?key=${API_KEY}`
     ); // Si no existe en la base de datos, lo buscamos en la API de RAWG.
 
     if (!response.ok) {
