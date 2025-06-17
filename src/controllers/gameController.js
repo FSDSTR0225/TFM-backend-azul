@@ -13,7 +13,8 @@ const getGames = async (req, res) => {
     const gamesFromMongo = await Game.find()
       // .sort({ name: 1 }) // Obtenemos los juegos por paginacion, usamos sort para ordenarlos por orden alfabético(1 = orden ascendente de A a Z),
       .skip((page - 1) * pageSize) // usamos skip para la paginacion y que sepa que juegos skipear(saltar), (Ej si estamos en pagina 2,page=2 serian (2-1)*25 = 25,se omitirian los primeros 25 juegos)
-      .limit(pageSize); // por ultimo limit - limita los juegos a lo marcado en la const pageSize.
+      .limit(pageSize) // por ultimo limit - limita los juegos a lo marcado en la const pageSize.
+      .lean(); // .lean() convierte el resultado en un objeto JavaScript simple, lo que mejora el rendimiento al no tener que crear instancias de Mongoose.
 
     // Si hay juegos en Mongo, devolverlos
     if (gamesFromMongo.length > 0) {

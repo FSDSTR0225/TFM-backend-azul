@@ -1,4 +1,5 @@
 const userWidgetConfig = require("../models/userWidgetConfigModel");
+const User = require("../models/userModel");
 
 const getWidgetConfig = async (req, res) => {
   const userId = req.user.id; // Obtenemos el ID del usuario autenticado desde el token
@@ -27,7 +28,6 @@ const getWidgetConfig = async (req, res) => {
 const addWidget = async (req, res) => {
   const userId = req.user.id;
   const widgetType = req.params.widgetType;
-
   const possibleWidgets = [
     "friends",
     "calendar",
@@ -221,7 +221,45 @@ const deleteWidget = async (req, res) => {
   }
 };
 
-const getSuggestionsUsers = async (req, res) => {};
+const getSuggestionsUsers = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId).select(
+      "favoriteTags favoriteGames availability"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    if (!user.favoriteTags?.length || !user.favoriteGames?.length) {
+      // !user.availability
+      return res.status(400).json({
+        message: "Debes completar tu perfil para recibir sugerencias",
+      });
+    }
+
+    const suggestions = await User.find({
+      _id: { $ne: userId }, // Excluir al usuario actual, $ne significa "not equal"
+      // availability: user.availability, // Mismo estado de disponibilidad
+      favoriteTags: { $in: user.favoriteTags }, // Al menos un tag favorito en común
+      favoriteGames: { $in: user.favoriteGames }, // Al menos un juego favorito en común
+      friends: { $ne: userId }, // Excluir amigos para evitar sugerir amigos
+    })
+      .select("username avatar ")
+      .limit(5) // Limitar a 5 sugerencias
+      .lean(); // Convertir a objetos JavaScript simples para mejor rendimiento
+
+    return res.status(200).json({
+      message: "Sugerencias de usuarios obtenidas correctamente",
+      suggestions: suggestions || [],
+    });
+  } catch (error) {
+    console.error("Error al obtener sugerencias de usuarios", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getWidgetConfig,
