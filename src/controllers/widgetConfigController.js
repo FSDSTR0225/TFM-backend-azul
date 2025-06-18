@@ -332,6 +332,8 @@ const getSuggestionsUsers = async (req, res) => {
   }
 };
 
+const getSuggestionsGames = async (req, res) => {};
+
 module.exports = {
   getWidgetConfig,
   addWidget,
@@ -339,4 +341,5 @@ module.exports = {
   updateMultiWidgets,
   deleteWidget,
   getSuggestionsUsers,
+  getSuggestionsGames,
 };
