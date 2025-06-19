@@ -97,6 +97,11 @@ const userSchema = new mongoose.Schema(
         },
       ],
     },
+    lastGameSuggestionUpdate: {
+      type: Date,
+      default: Date.now,
+    },
+    gameSuggestions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Game" }],
   },
   { timestamps: true }
 );

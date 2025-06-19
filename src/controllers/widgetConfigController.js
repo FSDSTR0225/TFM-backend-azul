@@ -1,5 +1,6 @@
 const userWidgetConfig = require("../models/userWidgetConfigModel");
 const User = require("../models/userModel");
+const Game = require("../models/gameModel");
 
 const getWidgetConfig = async (req, res) => {
   const userId = req.user.id; // Obtenemos el ID del usuario autenticado desde el token
@@ -332,7 +333,63 @@ const getSuggestionsUsers = async (req, res) => {
   }
 };
 
-const getSuggestionsGames = async (req, res) => {};
+const getSuggestionsGames = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId).select(
+      "favoriteGames favoriteTags gameSuggestions lastGameSuggestionUpdate"
+    );
+
+    if (!user) {
+      return res.status(400).json("Usuario no encontrado");
+    }
+
+    const now = new Date();
+
+    // Si ya tiene sugerencias válidas (no expiradas), devuélvelas
+    const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+    const timePassed = now - user.lastGameSuggestionUpdate;
+
+    if (user.gameSuggestions.length > 0 && timePassed < THREE_DAYS_MS) {
+      const games = await Game.find({ _id: { $in: user.gameSuggestions } });
+      const timeLeft = THREE_DAYS_MS - timePassed;
+
+      return res.status(200).json({
+        gamesSuggested: games,
+        nextUpdate: timeLeft,
+      });
+    }
+
+    // Si no hay sugerencias guardadas o han expirado, generamos nuevas
+    const tagPreferences = [
+      ...user.favoriteTags.genres,
+      ...user.favoriteTags.themes,
+      ...user.favoriteTags.modes,
+      ...user.favoriteTags.others,
+    ];
+
+    const excludedGames = user.favoriteGames.map((game) => game.toString());
+
+    const newGames = await Game.find({
+      tags: { $in: tagPreferences },
+      _id: { $nin: excludedGames },
+    }).limit(5);
+
+    user.gameSuggestions = newGames.map((g) => g._id); // guardamos los id de cada juego sugerido
+    user.lastGameSuggestionUpdate = now; //actualizamos la fecha de la última actualización a la fecha actual
+
+    await user.save();
+
+    return res.status(200).json({
+      gamesSuggested: newGames,
+      nextUpdate: THREE_DAYS_MS,
+    });
+  } catch (error) {
+    console.error("Error al sugerir juegos", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getWidgetConfig,
@@ -343,3 +400,43 @@ module.exports = {
   getSuggestionsUsers,
   getSuggestionsGames,
 };
+
+// const getSuggestionsGames = async (req, res) => {
+//   const userId = req.user.id;
+
+//   try {
+//     const user = await User.findById(userId).select(
+//       "favoriteGames favoriteTags"
+//     );
+
+//     if (!user) {
+//       return res.status(400).json("Usuario no encontrado");
+//     }
+
+//     //Convertimos en array plano los favoriteTags, usamos el spread operator para aplanar los arrays de tags y añadirlos a un solo array
+//     const tagPreferences = [
+//       ...user.favoriteTags.genres,
+//       ...user.favoriteTags.themes,
+//       ...user.favoriteTags.modes,
+//       ...user.favoriteTags.others,
+//     ];
+
+//     // excluir los juegos favoritos del usuario de las sugerencias,recorremos el array de juegos favoritos del usuario y convertimos cada ID a string para poder compararlos con los IDs de los juegos en la base de datos
+//     const excludedGames = user.favoriteGames.map((game) => game.toString());
+
+//     // Buscamos juegos que coincidan con los tags favoritos del usuario ($in: tagPreferences) y que no estén en los juegos favoritos del usuario (_id: { $nin: excludedGames })
+//     const gamesSuggested = await Game.find({
+//       tags: {
+//         $in: tagPreferences,
+//       },
+//       _id: { $nin: excludedGames },
+//     }).limit(5);
+
+//     // AÑADIR LOGICA DE BUSQUEDA EN RAWG SI NO HAY JUEGOS SUGERIDOS EN LA BASE DE DATOS + ADELANTE
+
+//     return res.status(200).json({ gamesSuggested });
+//   } catch (error) {
+//     console.error("Error al sugerir juegos", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
