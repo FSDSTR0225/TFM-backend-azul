@@ -199,9 +199,10 @@ const deleteWidget = async (req, res) => {
     const userConfig = await userWidgetConfig.findOne({ user: userId });
 
     if (!userConfig) {
-      return res
-        .status(404)
-        .json({ message: "No se encontró la configuración del usuario" });
+      return res.status(200).json({
+        message: "No hay configuración de widgets para este usuario",
+        widgets: [],
+      });
     }
 
     const widget = userConfig.widgets.id(widgetId);
