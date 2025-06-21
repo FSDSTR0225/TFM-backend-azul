@@ -1,6 +1,18 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+// const nodemailer = require("nodemailer");
+
+// // Create a test account or replace with real credentials.
+// const transporter = nodemailer.createTransport({
+//   host: "smtp-relay.brevo.com",
+//   port: 587,
+//   secure: false, // true for 465, false for other ports
+//   auth: {
+//     user: "tfmazul@gmail.com",
+//     pass: "bJt3PpOZXgnQ0RAF",
+//   },
+// });
 
 const registerUser = async (req, res) => {
   try {
@@ -16,8 +28,10 @@ const registerUser = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
 
     const userExists = await User.findOne({
-      $or: [{ email: cleanEmail }, { usernameLower }],
+      $or: [{ email: cleanEmail }, { usernameLower: usernameLower }],
     }); // buscamos si usuario o email ya existen con el operador $or que es de mongo y permite buscar por varios campos a la vez
+    console.log("userExists", userExists);
+
     if (userExists) {
       return res.status(409).json({
         //usamos el status 409 que es para conflictos,en este caso si el usuario o email ya existen
@@ -35,6 +49,7 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
+    console.log("Usuario creado:", user);
     // firmamos el token con la libreria jsonwebtoken,jwt.sign se usa para crear/firmar un token,
     // el primer parametro es el payload (los datos que queremos enviar en el token),
     // el segundo parametro es la clave secreta que usamos para firmar el token (process.env.JWT_SECRET)
@@ -49,6 +64,17 @@ const registerUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    console.log("Token generado:", token);
+
+    // await transporter.sendMail({
+    //   from: "tfmazul@gmail.com",
+    //   to: "lidia7394@gmail.com", // list of receivers``,
+    //   subject: "Bienvenido a Link2Play", // Subject line
+    //   text: `Hola buen registro,ale a disfrutar`, // plain‑text body
+    //   html: "<b>Hello world?</b>", // HTML body
+    // });
+    // console.log("Correo enviado correctamente");
 
     //respuesta con el token,bearer es el tipo de token que estamos usando, y el mensaje de exito,ademas de los datos del usuario que acabamos de crear.
     return res.status(201).json({

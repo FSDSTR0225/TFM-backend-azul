@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const widgetSchema = require("./widgetSchema");
+const widgetSchema = require("./widgetModel");
 
 const userWidgetConfigSchema = new mongoose.Schema(
   {

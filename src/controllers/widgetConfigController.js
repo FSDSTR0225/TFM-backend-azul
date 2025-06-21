@@ -1,6 +1,7 @@
 const userWidgetConfig = require("../models/userWidgetConfigModel");
 const User = require("../models/userModel");
 const Game = require("../models/gameModel");
+const Event = require("../models/eventModel");
 
 const getWidgetConfig = async (req, res) => {
   const userId = req.user.id; // Obtenemos el ID del usuario autenticado desde el token
@@ -271,24 +272,24 @@ const getSuggestionsUsers = async (req, res) => {
     const user = await User.findById(userId).select(
       "favoriteTags favoriteGames friends"
     );
-    console.log("Usuario autenticado:", user);
+    // console.log("Usuario autenticado:", user);
 
     if (!user) {
-      console.log("No se encontró el usuario");
+      // console.log("No se encontró el usuario");
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
     const allTags = user.favoriteTags
       ? Object.values(user.favoriteTags).flat()
       : [];
-    console.log("Tags aplanados:", allTags);
+    // console.log("Tags aplanados:", allTags);
 
     if (!allTags.length || !user.favoriteGames?.length) {
-      console.log(
-        "Faltan tags o juegos favoritos:",
-        allTags,
-        user.favoriteGames
-      );
+      // console.log(
+      //   "Faltan tags o juegos favoritos:",
+      //   allTags,
+      //   user.favoriteGames
+      // );
       return res.status(400).json({
         message: "Debes completar tu perfil para recibir sugerencias",
       });
@@ -298,10 +299,10 @@ const getSuggestionsUsers = async (req, res) => {
     const favoriteGamesObjectIds = user.favoriteGames.map((id) =>
       typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
     );
-    console.log("favoriteGamesObjectIds:", favoriteGamesObjectIds);
+    // console.log("favoriteGamesObjectIds:", favoriteGamesObjectIds);
 
     // Log de amigos
-    console.log("Amigos del usuario:", user.friends);
+    // console.log("Amigos del usuario:", user.friends);
 
     // Log de la query
     const query = {
@@ -315,14 +316,14 @@ const getSuggestionsUsers = async (req, res) => {
       favoriteGames: { $in: favoriteGamesObjectIds },
       "friends.user": { $ne: userId }, // <-- usa esto si friends es array de objetos
     };
-    console.log("Query de sugerencias:", JSON.stringify(query, null, 2));
+    // console.log("Query de sugerencias:", JSON.stringify(query, null, 2));
 
     const suggestions = await User.find(query)
       .select("username avatar favoriteTags favoriteGames friends")
       .limit(5)
       .lean();
 
-    console.log("Sugerencias encontradas:", suggestions);
+    // console.log("Sugerencias encontradas:", suggestions);
 
     return res.status(200).json({
       message: "Sugerencias de usuarios obtenidas correctamente",
@@ -392,6 +393,87 @@ const getSuggestionsGames = async (req, res) => {
   }
 };
 
+const getSuggestionsEvents = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId)
+      .populate("favoriteGames")
+      .populate("favoriteTags")
+      .lean(); // Usamos .lean() para obtener un objeto JavaScript simple
+
+    if (!user) {
+      return res.status(400).json("Usuario no encontrado");
+    }
+
+    if (!user.favoriteTags) {
+      return res
+        .status(200)
+        .json({ events: [], message: "Aún no has configurado tags favoritos" });
+    }
+
+    const tagPreferences = [
+      ...user.favoriteTags.genres,
+      ...user.favoriteTags.themes,
+      ...user.favoriteTags.modes,
+      ...user.favoriteTags.others,
+    ];
+
+    // Buscamos los eventos en los que el usuario participa y cogemos los juegos de esos eventos
+    const userEvents = await Event.find({
+      participants: userId,
+    }).populate("game");
+
+    // Convertimos los IDs de los juegos de los eventos y los juegos favoritos del usuario a strings para poder compararlos
+    const gamesFromEvents = userEvents.map((ev) => ev.game._id.toString());
+    const gamesFromFavorites = user.favoriteGames.map((g) => g._id.toString());
+
+    // Combinamos los juegos de los eventos y los favoritos del usuario, eliminando duplicados con new Set que convierte el array en un Set (colección de valores únicos) y luego lo convertimos de nuevo a array con el spread operator
+    const userInterestGames = [
+      ...new Set([...gamesFromEvents, ...gamesFromFavorites]),
+    ];
+
+    const now = new Date();
+
+    //Buscamos eventos que sean mayor a hoy, que no requieran aprobacion, que no sean del usuario autenticado y que no tenga el usuario como participante
+    const publicEvents = await Event.find({
+      date: { $gt: now },
+      creator: { $ne: userId },
+      participants: { $ne: userId }, //$ne: userId para excluir eventos en los que el usuario ya es participante
+      requiresApproval: false, // Excluir eventos que requieran aprobación
+    })
+      .populate("game platform")
+      .sort({ date: 1 })
+      .limit(50); // Aseguramos que los eventos tengan los datos del juego y la plataforma, los traemos ordenados por fecha y limitamos a 50 para no sobrecargar la consulta
+
+    // filtramos lo eventos buscando los que coincidan con los juegos relacionados del usuario y sus tags favoritos, hac
+    const filteredEvents = publicEvents.filter((event) => {
+      const gameId = event.game._id.toString(); //cogemos el ID del juego del evento y lo convertimos a string para poder compararlo
+      const gameTags = event.game.tags || []; // Obtenemos las tags del juego del evento, si no tiene tags, devolvemos un array vacío
+
+      const matchesGame = userInterestGames.includes(gameId); // comprobamos si el id de los juegos de los eventos coincide con los juegos de interes del usuario
+      const matchesTags = gameTags.some((tag) => tagPreferences.includes(tag)); // comprobamos si alguna de las tags del juego del evento coincide con las tags favoritas del usuario
+
+      return matchesGame || matchesTags; // Retornamos true si el evento coincide con algún juego de interés o alguna tag favorita del usuario
+    });
+
+    // Devolver máximo 5 sugerencias
+    const suggestions = filteredEvents.slice(0, 5);
+
+    if (suggestions.length === 0) {
+      return res.status(200).json({
+        events: [],
+        message: "No hay sugerencias disponibles por ahora.",
+      });
+    }
+
+    return res.status(200).json({ events: suggestions });
+  } catch (error) {
+    console.error("Error al obtener eventos sugeridos:", error);
+    return res.status(500).json({ message: "Error del servidor" });
+  }
+};
+
 module.exports = {
   getWidgetConfig,
   addWidget,
@@ -400,6 +482,7 @@ module.exports = {
   deleteWidget,
   getSuggestionsUsers,
   getSuggestionsGames,
+  getSuggestionsEvents,
 };
 
 // const getSuggestionsGames = async (req, res) => {
