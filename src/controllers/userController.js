@@ -42,10 +42,10 @@ const getUsers = async (req, res) => {
 const getUserByUsername = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username }) // Buscamos el usuario por username
-      .select("username avatar favoriteGames platforms aviability") // Elegimos los campos a devolver de la ficha publica
+      .select("username avatar favoriteGames platforms friends aviability") // Elegimos los campos a devolver de la ficha publica
       .populate("favoriteGames", "name")
-      .populate("platforms", "name"); // Elegimos que de favoritesGames  y platform se vea el nombre
-
+      .populate("platforms", "name") // Elegimos que de favoritesGames  y platform se vea el nombre
+      .populate("friends.user", "username avatar"); // Poblamos los amigos para que se vea el username y avatar
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
