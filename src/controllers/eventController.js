@@ -38,7 +38,7 @@ const createEvent = async (req, res) => {
     });
 
     const populatedEvent = await Event.findById(newEvent._id) // populamos el evento recién creado para incluir los detalles del juego, plataforma y creador
-      .populate("game", "name")
+      .populate("game", "name imageUrl")
       .populate("platform", "name icon")
       .populate("creator", "username avatar");
 
@@ -54,7 +54,7 @@ const createEvent = async (req, res) => {
 const getEvents = async (req, res) => {
   try {
     const dbEvents = await Event.find({ date: { $gte: new Date() } })
-      .populate("game", "name")
+      .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
       .populate("creator", "username avatar")
       .populate("platform", "name icon");
 
@@ -66,6 +66,7 @@ const getEvents = async (req, res) => {
           title: event.title,
           game: {
             name: event.game.name,
+            imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
           },
           platform: {
             name: event.platform.name,
@@ -95,7 +96,7 @@ const getEventById = async (req, res) => {
 
   try {
     const event = await Event.findById(eventId) // Buscamos el evento por su id y lo llenamos con los datos de la base de datos,hacemos populate de los datos que queremos obtener de la base de datos.
-      .populate("game", "name")
+      .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
       .populate("creator", "username avatar")
       .populate("participants", "username avatar")
       .populate("platform", "name icon");
@@ -116,6 +117,7 @@ const getEventById = async (req, res) => {
       date: event.date,
       game: {
         name: event.game.name,
+        imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
       },
       platform: {
         name: event.platform.name,
@@ -182,7 +184,7 @@ const joinEvent = async (req, res) => {
       event.participants.push(userId); // añadimos el id del usuario al array de participantes del evento
       await event.save(); // guardamos el evento con el nuevo participante
       const updatedEvent = await Event.findById(eventId)
-        .populate("game", "name")
+        .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
         .populate("creator", "username avatar")
         .populate("participants", "username avatar")
         .populate("platform", "name icon");
@@ -194,6 +196,7 @@ const joinEvent = async (req, res) => {
         date: updatedEvent.date,
         game: {
           name: updatedEvent.game.name,
+          imageUrl: updatedEvent.game.imageUrl, // Incluimos la imagen del juego si está disponible
         },
         platform: {
           name: updatedEvent.platform.name,
@@ -295,15 +298,13 @@ const updateEvent = async (req, res) => {
       .populate("platform")
       .populate("participants", "username avatar");
 
-    return res
-      .status(200)
-      .json({
-        message: "Evento actualizado",
-        updatedEvent: {
-          ...populatedEvent.toObject(),
-          id: populatedEvent._id.toString(),
-        },
-      });
+    return res.status(200).json({
+      message: "Evento actualizado",
+      updatedEvent: {
+        ...populatedEvent.toObject(),
+        id: populatedEvent._id.toString(),
+      },
+    });
   } catch (error) {
     console.error("Error al editar el evento", error);
     return res.status(500).json({ error: error.message });
@@ -343,7 +344,7 @@ const getMyCreatedEvents = async (req, res) => {
       $and: [{ creator: userId }, { date: { $gte: new Date() } }],
     }) // buscamos los eventos creados donde el creador es el usuario logueado
       .sort({ date: -1 }) // ordenamos por fecha de creacion,los mas recientes primero (-1 es orden descendente y ordenamos el campo date)
-      .populate({ path: "game", select: "name" }) // obtenemos datos del evento y le hacemos populate a game para obtener el nombre del juego
+      .populate({ path: "game", select: "name imageUrl" }) // obtenemos datos del evento y le hacemos populate a game para obtener el nombre del juego
       .populate({ path: "platform", select: "name icon" })
       .populate({ path: "creator", select: "username avatar" });
 
@@ -361,6 +362,7 @@ const getMyCreatedEvents = async (req, res) => {
       maxParticipants: event.maxParticipants,
       game: {
         name: event.game.name,
+        imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
       },
       platform: {
         name: event.platform.name,
@@ -392,7 +394,7 @@ const getPastEvents = async (req, res) => {
       date: { $lt: new Date() }, // Filtramos eventos pasados
     })
       .sort({ date: -1 }) // Ordenamos por fecha de forma descendente
-      .populate("game", "name")
+      .populate("game", "name imageUrl")
       .populate("platform", "name icon")
       .populate("creator", "username avatar");
 
@@ -422,7 +424,7 @@ const getEventsToday = async (req, res) => {
       date: { $gte: now, $lte: endOfToday },
       $or: [{ creator: userId }, { participants: userId }],
     })
-      .populate("game", "name")
+      .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
       .populate("platform", "name icon")
       .populate("creator", "username avatar")
       .sort({ date: 1 });
@@ -495,7 +497,7 @@ const getAllMyEvents = async (req, res) => {
       $or: [{ creator: userId }, { participants: userId }],
     })
       .sort({ date: 1 })
-      .populate({ path: "game", select: "name" })
+      .populate({ path: "game", select: "name imageUrl" })
       .populate({ path: "platform", select: "name icon" })
       .populate({ path: "creator", select: "username avatar" });
 
@@ -516,6 +518,7 @@ const getAllMyEvents = async (req, res) => {
       maxParticipants: event.maxParticipants,
       game: {
         name: event.game.name,
+        imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
       },
       platform: {
         name: event.platform.name,
@@ -551,7 +554,7 @@ const getMyJoinedEvents = async (req, res) => {
       ],
     })
       .sort({ date: 1 })
-      .populate({ path: "game", select: "name" })
+      .populate({ path: "game", select: "name imageUrl" })
       .populate({ path: "platform", select: "name icon" })
       .populate({ path: "creator", select: "username avatar" });
 
@@ -568,6 +571,7 @@ const getMyJoinedEvents = async (req, res) => {
       maxParticipants: event.maxParticipants,
       game: {
         name: event.game.name,
+        imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
       },
       platform: {
         name: event.platform.name,

@@ -354,7 +354,12 @@ const getSuggestionsGames = async (req, res) => {
     const timePassed = now - user.lastGameSuggestionUpdate;
 
     if (user.gameSuggestions.length > 0 && timePassed < THREE_DAYS_MS) {
-      const games = await Game.find({ _id: { $in: user.gameSuggestions } });
+      const games = await Game.find({
+        _id: { $in: user.gameSuggestions },
+      })
+        .populate("platforms", "name")
+        .select("name imageUrl screenshots tags platforms");
+
       const timeLeft = THREE_DAYS_MS - timePassed;
 
       return res.status(200).json({
@@ -376,7 +381,10 @@ const getSuggestionsGames = async (req, res) => {
     const newGames = await Game.find({
       tags: { $in: tagPreferences },
       _id: { $nin: excludedGames },
-    }).limit(5);
+    })
+      .limit(5)
+      .populate("platforms", "name")
+      .select("name imageUrl screenshots tags platforms");
 
     user.gameSuggestions = newGames.map((g) => g._id); // guardamos los id de cada juego sugerido
     user.lastGameSuggestionUpdate = now; //actualizamos la fecha de la última actualización a la fecha actual
@@ -458,7 +466,7 @@ const getSuggestionsEvents = async (req, res) => {
     });
 
     // Devolver máximo 5 sugerencias
-    const suggestions = filteredEvents.slice(0, 5);
+    const suggestions = filteredEvents.slice(0, 4);
 
     if (suggestions.length === 0) {
       return res.status(200).json({
