@@ -191,22 +191,61 @@ const getGameById = async (req, res) => {
 
 module.exports = { getGames, getGameById };
 
-// const Game = require("../models/gameModel");
+//Tags irrelevantes
 
-// const getGames = async (req, res) => {
-//   const page = parseInt(req.query.page) || 1; // Si no se pasa la página o se pasa mal,por defecto será la 1.
-//   const pageSize = 25;
-//   try {
-//     const games = await Game.find()
-//       .sort({ name: 1 })
-//       .skip((page - 1) * pageSize)
-//       .limit(pageSize);
-//     //  Obtenemos los juegos por paginacion, usamos sort para ordenarlos por orden alfabético(1 = orden ascendente de A a Z), usamos skip para la paginacion y
-//     //que sepa que juegos skipear, (Ej si estamos en pagina 2,page=2 serian (2-1)*25 = 25,se omitirian los primeros 25 juegos) y por ultimo limit - limita los juegos a lo marcado en la const pageSize.
-//     res.status(201).json(games);
-//   } catch (error) {
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
+// const tagsAExcluir = [
+//     "Atmospheric",
+//     "Great Soundtrack",
+//     "Soundtrack",
+//     "VR",
+//     "VR Mod",
+//     "Moddable",
+//     "Steam Achievements",
+//     "Steam Cloud",
+//     "Steam Workshop",
+//     "Replay Value",
+//     "Difficult",
+//     "Controller",
+//     "Partial Controller Support",
+//     "Full controller support",
+//     "Level Editor",
+//     "Procedural Generation",
+//     "Physics",
+//     "Early Access",
+//     "Kickstarter",
+//     "Funny",
+//     "Comedy",
+//     "Parody",
+//     "Memes",
+//     "Short",
+//     "Minimalist",
+//     "Third Person Shooter",
+//     "2.5D",
+//     "Cinematic",
+//     "Photo Mode",
+//     "Loot",
+//     "Perma Death",
+//     "Bullet Time",
+//     "Time Manipulation",
+//     "Narration",
+//     "Unforgiving",
+//     "Side Scroller",
+//     "Top-Down Shooter",
+//     "Top-Down",
+//     "Isometric",
+//     "2D Platformer",
+//     "Split Screen",
+//     "Stylized",
+//     "Sandbox",
+//     "Beautiful",
+//     "Colorful",
+//     "Text-Based",
+//     "Dark",
+//     "Dark Humor",
+//     "Lore-Rich",
+//   ];
 
-// module.exports = getGames;
+// tags:
+//         data.tags
+//           ?.map((t) => t.name)
+//           .filter((tag) => !tagsAExcluir.includes(tag)) || [],
