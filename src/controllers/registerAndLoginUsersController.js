@@ -1,18 +1,7 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-// const nodemailer = require("nodemailer");
-
-// // Create a test account or replace with real credentials.
-// const transporter = nodemailer.createTransport({
-//   host: "smtp-relay.brevo.com",
-//   port: 587,
-//   secure: false, // true for 465, false for other ports
-//   auth: {
-//     user: "tfmazul@gmail.com",
-//     pass: "bJt3PpOZXgnQ0RAF",
-//   },
-// });
+const transporter = require("../config/mail");
 
 const registerUser = async (req, res) => {
   try {
@@ -67,14 +56,40 @@ const registerUser = async (req, res) => {
 
     console.log("Token generado:", token);
 
-    // await transporter.sendMail({
-    //   from: "tfmazul@gmail.com",
-    //   to: "lidia7394@gmail.com", // list of receivers``,
-    //   subject: "Bienvenido a Link2Play", // Subject line
-    //   text: `Hola buen registro,ale a disfrutar`, // plain‑text body
-    //   html: "<b>Hello world?</b>", // HTML body
-    // });
-    // console.log("Correo enviado correctamente");
+    try {
+      await transporter.sendMail({
+        from: '"Link2Play" <tfmazul@gmail.com>',
+        to: user.email,
+        subject: "Bienvenido a Link2Play",
+        text: `Hola ${username}, gracias por registrarte en Link2Play. ¡Que empiece la aventura!`,
+        html: `
+  <body style="margin:0; padding:0; background:linear-gradient(135deg,#0f0f0f,#1a1a2e); font-family: 'Segoe UI', sans-serif; color: #fff;">
+    <table align="center" width="100%" style="max-width: 600px; background: rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(8px); box-shadow: 0 0 12px rgba(0,255,255,0.2); margin-top: 40px; padding: 30px;">
+      <tr>
+        <td align="center">
+          <img src="https://cdn-icons-png.flaticon.com/512/3791/3791503.png" width="80" style="margin-bottom: 20px;" alt="Link2Play Logo" />
+          <h1 style="font-size: 26px; color: #00ffe7; text-shadow: 0 0 5px #00ffe7;">¡Bienvenido a Link2Play!</h1>
+          <p style="font-size: 16px; color: #ccc;">Bien hecho <strong style="color:#00ffe7;">${username}</strong>, tu cuenta ha sido creada con éxito. </p>
+          <br />
+          <p style="font-size: 16px; color: #ccc;">¡Comienza tu aventura! Ya puedes organizar y unirte a partidas, conocer jugadores, formar tu squad y disfrutar de la comunidad Link2Play 🎮</p>
+          <a href="https://link2play.com/login" target="_blank"
+            style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #00ffe7; color: #0f0f0f; border-radius: 30px; text-decoration: none; font-weight: bold; text-shadow: none; box-shadow: 0 0 8px #00ffe7;">
+            ENTRAR A LINK2PLAY
+          </a>
+          <div style="margin-top: 30px;">
+            <p style="font-size: 13px; color: #888;">¿No fuiste tú? Ignora este correo.</p>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+`,
+      });
+      console.log("Correo enviado correctamente");
+    } catch (mailError) {
+      console.error("Error al enviar el correo:", mailError.message);
+      // opcional: continuar sin romper el flujo
+    }
 
     //respuesta con el token,bearer es el tipo de token que estamos usando, y el mensaje de exito,ademas de los datos del usuario que acabamos de crear.
     return res.status(201).json({
