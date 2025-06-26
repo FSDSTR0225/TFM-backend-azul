@@ -63,18 +63,18 @@ const registerUser = async (req, res) => {
         subject: "Bienvenido a Link2Play",
         text: `Hola ${username}, gracias por registrarte en Link2Play. ¡Que empiece la aventura!`,
         html: `
-<body style="margin:0;padding:0;background:#181c2b;font-family:'Segoe UI','Poppins','Audiowide',Arial,sans-serif;color:#fff;">
-  <!-- Wrapper table (keeps email centred) -->
+<body style="margin:0;padding:0;font-family:'Audiowide','Segoe UI','Poppins',Arial,sans-serif;color:#fff;">
+  <!-- Wrapper table (keeps email centred) background:#181c2b-->
   <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
     <tr>
       <td align="center" style="padding:40px 12px;">
-        <!-- Card container with real border‑radius (div, not table ‑ Gmail respeta) -->
-        <div style="max-width:600px;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,#0f0f0f,#1a1a2e);
+        <!-- Card container -->
+        <div style="max-width:800px;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,#0f0f0f,#1a1a2e);
                     box-shadow:0 0 32px #00ffc855,0 2px 12px #000a;">
           <!-- ========== HEADER ========== -->
           <div style="padding:44px 30px 30px 30px;text-align:center;">
             <img src="https://cdn-icons-png.flaticon.com/512/11914/11914271.png" width="84" style="margin-bottom:18px; background:linear-gradient(135deg,#0f0f0f,#1a1a2e); border-radius:50px; box-shadow:0 0 16px #00ffe7cc;">
-            <h1 style="font-size:30px;color:#00ffe7;text-shadow:0 0 10px #00ffe7,0 0 2px #181a2a;
+            <h1 style="font-size:30px;color:#00ffe7;text-shadow:0 0 10px #00ffe6,0 0 2px #181a2a;
                        font-family:'Audiowide','Segoe UI',Arial,sans-serif;margin:0 0 10px;letter-spacing:1px;">
               ¡Bienvenido a Link2Play!
             </h1>
@@ -88,9 +88,10 @@ const registerUser = async (req, res) => {
             </p>
             <p style="font-size:16px;color:#b2f7ef;margin:0 0 26px 0;line-height:1.45;">Ya estás listo para comenzar:</p>
             <ul style="list-style:none;margin:0 0 34px 0;padding:0;font-size:16px;color:#b2f7ef;line-height:1.6;text-align:left;max-width:320px;display:inline-block;">
-              <li style="margin:0;">• Organiza o únete a partidas.</li>
-              <li style="margin:0;">• Conecta con jugadores que comparten tu pasión.</li>
-              <li style="margin:0;">• Forma tu squad y sumérgete en la comunidad <strong style="color:#00ffe7;">Link2Play</strong>.</li>
+             <li style="margin:0;">• Personaliza tu perfil gamer.</li>  
+            <li style="margin:0;">• Organiza o únete a partidas.</li>
+              <li style="margin:0;">• Explora nuestra IA y descubre juegos o jugadores afines a ti.</li>
+              <li style="margin:0;">• Forma tu squad y vive la experiencia <strong style="color:#00ffe7;">Link2Play</strong>.</li>
             </ul>
             <br>
             <a href="https://link2play.com/login" target="_blank"
