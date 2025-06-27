@@ -17,6 +17,7 @@ const io = new Server(server, {
 });
 
 const User = require("./src/models/userModel");
+const Chat = require("./src/models/chatModel");
 
 io.on("connection", (socket) => {
   console.log("Un usuario se ha conectado");
@@ -24,6 +25,7 @@ io.on("connection", (socket) => {
   // Cuando un usuario se conecta, actualizamos su estado a online y guardamos su ID en el socket para usarlo al desconectarse
   socket.on("userConnect", async (userId) => {
     socket.userId = userId; // lo guardamos en el socket para usarlo al desconectarse
+    socket.join(userId); // unimos al usuario a una sala privada con su ID de usuario
     if (!userId) return;
 
     try {
@@ -51,6 +53,55 @@ io.on("connection", (socket) => {
     }
   });
 
+  //escuchamo el evento "private message" para recibir mensajes privados
+  socket.on("private message", async (msg) => {
+    //extraemos los datos del mensaje: id del que lo envia, id del destinatario y el contenido del mensaje
+    const { senderId, receiverId, content } = msg;
+    if (!senderId || !receiverId || !content) return;
+
+    try {
+      //buscamos en DB si ya existe un chat entre el remitente y el destinatario
+
+      let chat = await Chat.findOne({
+        participants: { $all: [senderId, receiverId] }, // ambos esten en ese chat
+      });
+
+      //si no existe, creamos uno nuevo
+      if (!chat) {
+        chat = new Chat({
+          participants: [senderId, receiverId],
+          messages: [],
+        });
+      }
+
+      //Creamos el nuevo mensaje
+      const newMessage = {
+        sender: senderId,
+        recipient: receiverId,
+        content,
+        timestamp: new Date(),
+      };
+
+      //Agregamos el nuevo mensaje al chat y lo guardamos en la base de datos
+      chat.messages.push(newMessage);
+      await chat.save();
+
+      // Enviamos el mensaje al destinatario
+      io.to(receiverId).emit("private message", {
+        ...newMessage,
+        chatId: chat._id,
+      });
+
+      // Tambien se le envia al remitente para que vea el mensaje enviado
+      socket.emit("private message", {
+        ...newMessage,
+        chatId: chat._id,
+      });
+    } catch (error) {
+      console.error("Error al guardar mensaje privado:", error);
+    }
+  });
+
   //Desconexion automática
   socket.on("disconnect", async () => {
     const userId = socket.userId;
@@ -67,9 +118,10 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("chat message", (msg) => {
-    io.emit("chat message", msg);
-  });
+  //CHAT GLOBAL
+  // socket.on("chat message", (msg) => {
+  //   io.emit("chat message", msg);
+  // });
 });
 
 // Conexión a la base de datos
