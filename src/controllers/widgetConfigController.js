@@ -2,6 +2,7 @@ const userWidgetConfig = require("../models/userWidgetConfigModel");
 const User = require("../models/userModel");
 const Game = require("../models/gameModel");
 const Event = require("../models/eventModel");
+const JoinEventRequest = require("../models/joinEventRequestModel");
 
 const getWidgetConfig = async (req, res) => {
   const userId = req.user.id; // Obtenemos el ID del usuario autenticado desde el token
@@ -451,9 +452,11 @@ const getSuggestionsEvents = async (req, res) => {
       requiresApproval: false, // Excluir eventos que requieran aprobación
     })
       .populate("game platform")
+      .populate("participants", "username avatar") // Aseguramos que los eventos tengan los datos del creador y los participantes
+      .populate("creator", "username avatar") // Aseguramos que los eventos tengan
       .sort({ date: 1 })
-      .limit(50); // Aseguramos que los eventos tengan los datos del juego y la plataforma, los traemos ordenados por fecha y limitamos a 50 para no sobrecargar la consulta
-
+      .limit(50) // Aseguramos que los eventos tengan los datos del juego y la plataforma, los traemos ordenados por fecha y limitamos a 50 para no sobrecargar la consulta
+      .lean();
     // filtramos lo eventos buscando los que coincidan con los juegos relacionados del usuario y sus tags favoritos, hac
     const filteredEvents = publicEvents.filter((event) => {
       const gameId = event.game._id.toString(); //cogemos el ID del juego del evento y lo convertimos a string para poder compararlo
@@ -466,7 +469,15 @@ const getSuggestionsEvents = async (req, res) => {
     });
 
     // Devolver máximo 5 sugerencias
-    const suggestions = filteredEvents.slice(0, 4);
+    const suggestions = filteredEvents.slice(0, 4).map((event) => ({
+      ...event,
+      creator: event.creator.username,
+      creatorAvatar: event.creator.avatar,
+      participants: event.participants.map((p) => ({
+        username: p.username,
+        avatar: p.avatar,
+      })),
+    }));
 
     if (suggestions.length === 0) {
       return res.status(200).json({
