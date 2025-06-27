@@ -102,6 +102,8 @@ const userSchema = new mongoose.Schema(
       default: Date.now,
     },
     gameSuggestions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Game" }],
+    suggestedUsersLastUpdated: { type: Date, default: null },
+    suggestedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

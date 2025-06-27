@@ -225,54 +225,15 @@ const deleteWidget = async (req, res) => {
   }
 };
 
-// const getSuggestionsUsers = async (req, res) => {
-//   const userId = req.user.id;
-
-//   try {
-//     const user = await User.findById(userId).select(
-//       "favoriteTags favoriteGames availability"
-//     );
-//     console.log("Usuario autenticado:", user);
-
-//     if (!user) {
-//       return res.status(404).json({ message: "Usuario no encontrado" });
-//     }
-
-//     if (!user.favoriteTags?.length || !user.favoriteGames?.length) {
-//       // !user.availability
-//       return res.status(400).json({
-//         message: "Debes completar tu perfil para recibir sugerencias",
-//       });
-//     }
-
-//     const suggestions = await User.find({
-//       _id: { $ne: userId }, // Excluir al usuario actual, $ne significa "not equal"
-//       // availability: user.availability, // Mismo estado de disponibilidad
-//       favoriteTags: { $in: user.favoriteTags }, // Al menos un tag favorito en común
-//       favoriteGames: { $in: user.favoriteGames }, // Al menos un juego favorito en común
-//       friends: { $ne: userId }, // Excluir amigos para evitar sugerir amigos
-//     })
-//       .select("username avatar ")
-//       .limit(5) // Limitar a 5 sugerencias
-//       .lean(); // Convertir a objetos JavaScript simples para mejor rendimiento
-
-//     return res.status(200).json({
-//       message: "Sugerencias de usuarios obtenidas correctamente",
-//       suggestions: suggestions || [],
-//     });
-//   } catch (error) {
-//     console.error("Error al obtener sugerencias de usuarios", error);
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
-
 const getSuggestionsUsers = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const user = await User.findById(userId).select(
-      "favoriteTags favoriteGames friends"
-    );
+    const user = await User.findById(userId)
+      .select(
+        "favoriteTags favoriteGames friends suggestedUsers suggestedUsersLastUpdate"
+      )
+      .lean();
     // console.log("Usuario autenticado:", user);
 
     if (!user) {
@@ -281,7 +242,7 @@ const getSuggestionsUsers = async (req, res) => {
     }
 
     const allTags = user.favoriteTags
-      ? Object.values(user.favoriteTags).flat()
+      ? Object.values(user.favoriteTags).flat() //usamos Object.values para obtener un array de los valores de favoriteTags y luego flat para aplanar el array
       : [];
     // console.log("Tags aplanados:", allTags);
 
@@ -296,39 +257,66 @@ const getSuggestionsUsers = async (req, res) => {
       });
     }
 
-    // Convierte los IDs de juegos favoritos a ObjectId
-    const favoriteGamesObjectIds = user.favoriteGames.map((id) =>
-      typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
-    );
-    // console.log("favoriteGamesObjectIds:", favoriteGamesObjectIds);
+    const now = new Date();
+    const lastUpdate = user.suggestedUsersLastUpdated;
+    const hoursPassed = lastUpdate
+      ? (now - new Date(lastUpdate)) / 36e5
+      : Infinity; //36e5 es 1000 * 60 * 60, que convierte milisegundos a horas e infinity si no hay lastUpdate
 
-    // Log de amigos
-    // console.log("Amigos del usuario:", user.friends);
+    //needNewSuggestions es true si no hay sugerencias, si hay menos de 3 sugerencias o si han pasado más de 72 horas desde la última actualización
+    const needNewSuggestions =
+      !user.suggestedUsers ||
+      user.suggestedUsers.length < 3 ||
+      hoursPassed > 72;
 
-    // Log de la query
-    const query = {
-      _id: { $ne: userId },
-      $or: [
-        { "favoriteTags.genres": { $in: allTags } },
-        { "favoriteTags.modes": { $in: allTags } },
-        { "favoriteTags.others": { $in: allTags } },
-        { "favoriteTags.themes": { $in: allTags } },
-      ],
-      favoriteGames: { $in: favoriteGamesObjectIds },
-      "friends.user": { $ne: userId }, // <-- usa esto si friends es array de objetos
-    };
-    // console.log("Query de sugerencias:", JSON.stringify(query, null, 2));
+    let finalSuggestions = [];
 
-    const suggestions = await User.find(query)
-      .select("username avatar favoriteTags favoriteGames friends")
-      .limit(5)
-      .lean();
+    // si es true, convertimos los IDs de los juegos favoritos del usuario a ObjectId para poder usarlos en la query
+    if (needNewSuggestions) {
+      const favoriteGamesObjectIds = user.favoriteGames.map((id) =>
+        typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
+      );
 
-    // console.log("Sugerencias encontradas:", suggestions);
+      // Log de la query
+      const query = {
+        _id: { $ne: userId },
+        $or: [
+          { "favoriteTags.genres": { $in: allTags } },
+          { "favoriteTags.modes": { $in: allTags } },
+          { "favoriteTags.others": { $in: allTags } },
+          { "favoriteTags.themes": { $in: allTags } },
+        ],
+        favoriteGames: { $in: favoriteGamesObjectIds },
+        "friends.user": { $ne: userId }, // si friends es array de objetos usamos $ne para excluir al usuario autenticado
+        _id: { $nin: user.suggestedUsers || [] }, // evita repetir usuarios ya sugeridos
+      };
+      // console.log("Query de sugerencias:", JSON.stringify(query, null, 2));
+
+      const newSuggestions = await User.find(query)
+        .select("username avatar favoriteTags favoriteGames friends")
+        .limit(5)
+        .lean();
+
+      // Guardamos las sugerencias nuevas en el usuario
+      await User.findByIdAndUpdate(userId, {
+        suggestedUsers: newSuggestions.map((user) => user._id),
+        suggestedUsersLastUpdated: now,
+      });
+
+      //ahora finalSuggestions es igual a las nuevas sugerencias
+      finalSuggestions = newSuggestions;
+    } else {
+      // Si no necesitamos nuevas sugerencias, buscamos las sugerencias ya guardadas y buscamos en el usuario los _id: de los usuarios que están en suggestedUsers
+      finalSuggestions = await User.find({
+        _id: { $in: user.suggestedUsers },
+      })
+        .select("username avatar favoriteTags favoriteGames friends")
+        .lean();
+    }
 
     return res.status(200).json({
       message: "Sugerencias de usuarios obtenidas correctamente",
-      suggestions: suggestions || [],
+      suggestions: finalSuggestions,
     });
   } catch (error) {
     console.error("Error al obtener sugerencias de usuarios", error);
