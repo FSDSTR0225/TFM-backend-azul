@@ -198,15 +198,24 @@ const rejectFriendRequest = async (req, res) => {
 };
 
 const getFriends = async (req, res) => {
+  const userId = req.user.id;
+
   try {
-    const user = await User.findById(req.user.id).populate(
-      "friends",
-      "username avatar"
+    const user = await User.findById(userId).populate(
+      "friends.user",
+      "username avatar onlineStatus"
     );
 
-    return res.json({ friends: user.friends });
+    const formattedFriends = user.friends.map((f) => ({
+      id: f.user._id,
+      username: f.user.username,
+      avatarUrl: f.user.avatar,
+      onlineStatus: f.user.onlineStatus,
+    }));
+
+    return res.json({ friends: formattedFriends });
   } catch (err) {
-    return res.status(500).json({ message: "Error al obtener amigos" });
+    return res.status(500).json({ message: "Error al obtener listado amigos" });
   }
 };
 
@@ -237,8 +246,8 @@ const deleteFriend = async (req, res) => {
       });
     }
     await FriendRequest.findOneAndDelete({
-      userSender: userId||friendId, // Buscamos la solicitud de amistad entre el usuario y el amigo
-      userReceiver: friendId||userId,
+      userSender: userId || friendId, // Buscamos la solicitud de amistad entre el usuario y el amigo
+      userReceiver: friendId || userId,
     }); // Buscamos la solicitud de amistad entre el usuario y el friendRequest
     // Eliminamos el amigo de la lista de amigos del usuario
     user.friends.splice(friendIndex, 1);

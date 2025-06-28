@@ -68,8 +68,10 @@ io.on("connection", (socket) => {
 
       //si no existe, creamos uno nuevo
       if (!chat) {
+        const orderedParticipants = [senderId, receiverId].sort(); // Ordenamos para evitar duplicados(chat con participantes A y B es el mismo que B y A)
+        // Creamos un nuevo chat con los participantes ordenados
         chat = new Chat({
-          participants: [senderId, receiverId],
+          participants: orderedParticipants,
           messages: [],
         });
       }

@@ -1,4 +1,5 @@
 const Chat = require("../models/chatModel");
+const User = require("../models/userModel");
 
 const getChatByFriendId = async (req, res) => {
   const userId = req.user.id;
