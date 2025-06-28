@@ -14,7 +14,7 @@ const getUsers = async (req, res) => {
     // Contar el número total de jugadores que cumplen los filtros
     const totalUsers = await User.countDocuments(filters);
 
-    console.log("Filtros recibidos:", { game, platform, time });
+    // console.log("Filtros recibidos:", { game, platform, time });
 
     if (game) filters["favoriteGames"] = game; //  Filtrar por juego
     if (platform) filters["platforms"] = platform; //  Filtrar por plataforma
