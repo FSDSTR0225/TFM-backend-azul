@@ -12,12 +12,9 @@ const dashboardRoute = require("./routes/dashboardRoute");
 const friendsRoute = require("./routes/friendsRoute");
 const eventsRoute = require("./routes/eventsRoute");
 const joinRequestRoute = require("./routes/joinRequestRoutes");
-<<<<<<< HEAD
 const postRoute = require("./routes/postRoute");
-=======
 const widgetConfigRoute = require("./routes/WidgetConfigRoute");
 const chatRoute = require("./routes/chatRoute");
->>>>>>> f962bb5abc0c0c65e7175929f31d8f87f0e87b30
 
 const app = express();
 
@@ -37,11 +34,8 @@ app.use("/dashboard", dashboardRoute);
 app.use("/friends", friendsRoute);
 app.use("/events", eventsRoute);
 app.use("/join-request", joinRequestRoute);
-<<<<<<< HEAD
 app.use("/post", postRoute);
-=======
 app.use("/dashboard/widgets", widgetConfigRoute);
 app.use("/chats", chatRoute);
->>>>>>> f962bb5abc0c0c65e7175929f31d8f87f0e87b30
 
 module.exports = app;
