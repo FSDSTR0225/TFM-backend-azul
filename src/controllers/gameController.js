@@ -13,7 +13,8 @@ const getGames = async (req, res) => {
     const gamesFromMongo = await Game.find()
       // .sort({ name: 1 }) // Obtenemos los juegos por paginacion, usamos sort para ordenarlos por orden alfabético(1 = orden ascendente de A a Z),
       .skip((page - 1) * pageSize) // usamos skip para la paginacion y que sepa que juegos skipear(saltar), (Ej si estamos en pagina 2,page=2 serian (2-1)*25 = 25,se omitirian los primeros 25 juegos)
-      .limit(pageSize); // por ultimo limit - limita los juegos a lo marcado en la const pageSize.
+      .limit(pageSize) // por ultimo limit - limita los juegos a lo marcado en la const pageSize.
+      .lean(); // .lean() convierte el resultado en un objeto JavaScript simple, lo que mejora el rendimiento al no tener que crear instancias de Mongoose.
 
     // Si hay juegos en Mongo, devolverlos
     if (gamesFromMongo.length > 0) {
@@ -22,7 +23,7 @@ const getGames = async (req, res) => {
 
     // Si no hay juegos en Mongo para esta página, llamar a RAWG en el mismo orden que en Mongo(paginación y orden alfabético)
     const response = await fetch(
-      `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added`
+      `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added&`
     );
 
     if (!response.ok) {
@@ -89,6 +90,15 @@ const getGameById = async (req, res) => {
       "platforms",
       "name slug"
     ); // Buscamos el juego por su RawgId en la base de datos (juegos cuya rawgId=Id de url),y no buscamos por findById porque no buscamos _.id de mongo sino la rawgId ya almacenada, y con el populate llenamos la propiedad platforms con el nombre y slug de la plataforma(no solo el id de la paltaforma que devolveria el juego).
+
+    // Si el juego existe en la base de datos, lo devolvemos.
+    // Si no existe en la base de datos, buscamos por id de mongo, ya que puede que el juego no tenga rawgId pero si id de mongo.
+    if (!gameFromMongo && mongoose.Types.ObjectId.isValid(id)) {
+      gameFromMongo = await Game.findById(id).populate(
+        "platforms",
+        "name slug"
+      );
+    }
 
     // Comprobamos si el juego necesita ser actualizado,
     // si no existe o si no tiene descripcion o desarrolladores o esrbRating.
@@ -168,8 +178,11 @@ const getGameById = async (req, res) => {
       }
     ); // updateOne busca el juego por su rawgId, y si lo encuentra lo actualiza con los datos que hemos recogido de la api, y si no lo encuentra lo crea con esos datos.
     // upsert: true significa que si no existe el juego, lo crea con los datos que le pasamos.(update + insert) y new:true significa que nos devuleva el juego actualizado y no el antiguo.
-
-    return res.status(200).json(updatedGame); // Devolvemos el juego obtenido de la Api.
+    const populatedGame = await Game.findById(updatedGame._id).populate(
+      "platforms",
+      "name slug"
+    );
+    return res.status(200).json(populatedGame); // Devolvemos el juego obtenido de la Api.
   } catch (error) {
     console.error("Error en getGameById:", error); // Si hay un error, lo mostramos por consola.
     res.status(500).json({ error: error.message });
@@ -178,22 +191,61 @@ const getGameById = async (req, res) => {
 
 module.exports = { getGames, getGameById };
 
-// const Game = require("../models/gameModel");
+//Tags irrelevantes
 
-// const getGames = async (req, res) => {
-//   const page = parseInt(req.query.page) || 1; // Si no se pasa la página o se pasa mal,por defecto será la 1.
-//   const pageSize = 25;
-//   try {
-//     const games = await Game.find()
-//       .sort({ name: 1 })
-//       .skip((page - 1) * pageSize)
-//       .limit(pageSize);
-//     //  Obtenemos los juegos por paginacion, usamos sort para ordenarlos por orden alfabético(1 = orden ascendente de A a Z), usamos skip para la paginacion y
-//     //que sepa que juegos skipear, (Ej si estamos en pagina 2,page=2 serian (2-1)*25 = 25,se omitirian los primeros 25 juegos) y por ultimo limit - limita los juegos a lo marcado en la const pageSize.
-//     res.status(201).json(games);
-//   } catch (error) {
-//     return res.status(500).json({ error: error.message });
-//   }
-// };
+// const tagsAExcluir = [
+//     "Atmospheric",
+//     "Great Soundtrack",
+//     "Soundtrack",
+//     "VR",
+//     "VR Mod",
+//     "Moddable",
+//     "Steam Achievements",
+//     "Steam Cloud",
+//     "Steam Workshop",
+//     "Replay Value",
+//     "Difficult",
+//     "Controller",
+//     "Partial Controller Support",
+//     "Full controller support",
+//     "Level Editor",
+//     "Procedural Generation",
+//     "Physics",
+//     "Early Access",
+//     "Kickstarter",
+//     "Funny",
+//     "Comedy",
+//     "Parody",
+//     "Memes",
+//     "Short",
+//     "Minimalist",
+//     "Third Person Shooter",
+//     "2.5D",
+//     "Cinematic",
+//     "Photo Mode",
+//     "Loot",
+//     "Perma Death",
+//     "Bullet Time",
+//     "Time Manipulation",
+//     "Narration",
+//     "Unforgiving",
+//     "Side Scroller",
+//     "Top-Down Shooter",
+//     "Top-Down",
+//     "Isometric",
+//     "2D Platformer",
+//     "Split Screen",
+//     "Stylized",
+//     "Sandbox",
+//     "Beautiful",
+//     "Colorful",
+//     "Text-Based",
+//     "Dark",
+//     "Dark Humor",
+//     "Lore-Rich",
+//   ];
 
-// module.exports = getGames;
+// tags:
+//         data.tags
+//           ?.map((t) => t.name)
+//           .filter((tag) => !tagsAExcluir.includes(tag)) || [],

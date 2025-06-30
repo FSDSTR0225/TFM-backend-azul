@@ -36,6 +36,9 @@ const gameSchema = new mongoose.Schema(
     background_image_additional: {
       type: String,
     },
+    background_image: {
+      type: String,
+    },
     clip: {
       type: String,
     },
