@@ -42,6 +42,9 @@ const createEvent = async (req, res) => {
       .populate("platform", "name icon")
       .populate("creator", "username avatar");
 
+    const io = req.app.get("io");
+    io.emit("newEvent", populatedEvent);
+
     res
       .status(200)
       .json({ message: "Evento creado con éxito", event: populatedEvent });
@@ -54,6 +57,7 @@ const createEvent = async (req, res) => {
 const getEvents = async (req, res) => {
   try {
     const dbEvents = await Event.find({ date: { $gte: new Date() } })
+      .sort({ date: 1 }) // Obtenemos los eventos que ocurren a partir de hoy, ordenados por fecha ascendente
       .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
       .populate("creator", "username avatar")
       .populate("platform", "name icon");

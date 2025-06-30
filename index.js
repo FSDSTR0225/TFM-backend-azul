@@ -4,7 +4,7 @@ const app = require("./src/app");
 
 const connectDB = require("./src/config/db");
 
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 const http = require("http");
 const { Server } = require("socket.io");
@@ -15,6 +15,8 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
+
+app.set("io", io);
 
 const User = require("./src/models/userModel");
 const Chat = require("./src/models/chatModel");
