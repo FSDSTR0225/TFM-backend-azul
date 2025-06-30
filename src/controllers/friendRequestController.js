@@ -44,6 +44,20 @@ const createFriendRequest = async (req, res) => {
 
     await newRequest.save();
 
+    const io = req.app.get("io");
+    // Obtenemos los datos del remitente para mostrarlos en el frontend
+    const sender = await User.findById(userSender).select("username avatar");
+    io.to(userReceiverId).emit("newFriendRequest", {
+      _id: newRequest._id,
+      userSender: {
+        _id: sender._id,
+        username: sender.username,
+        avatar: sender.avatar,
+      },
+      message: newRequest.message,
+      createdAt: newRequest.createdAt,
+    });
+
     return res.status(201).json(newRequest);
   } catch (error) {
     console.error("Error al crear la solicitud de amistad:", error);

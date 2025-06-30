@@ -35,28 +35,24 @@ const getJoinRequests = async (req, res) => {
 };
 
 const acceptOrRejectJoinRequest = async (req, res) => {
-  const { requestId, response } = req.body; // Obtenemos el id de la solicitud y la respuesta (accept o reject) del cuerpo de la peticion
-  const userId = req.user.id; // Obtenemos el id del usuario de la peticion, ya que lo guardamos en el token al registrarse o iniciar sesion
+  const { requestId, response } = req.body;
+  const userId = req.user.id;
 
   if (!requestId || !["accept", "reject"].includes(response)) {
-    //si no se ha proporcionado el id de la solicitud o la respuesta no es accept o reject, retornamos un error
     return res.status(400).json({ message: "Datos inválidos en la solicitud" });
   }
 
   try {
-    // buscamos la solicitud de unirse al evento por su id y hacemos populate del evento para obtener los datos del evento
     const joinRequest = await JoinEventRequest.findById(requestId)
       .populate("event")
       .populate("userRequester", "username");
 
     if (!joinRequest) {
-      //si no se encuentra la solicitud, retornamos un error
       return res.status(404).json({ message: "Solicitud no encontrada" });
     }
 
-    const event = joinRequest.event; // Obtenemos el evento asociado a la solicitud
+    const event = joinRequest.event;
 
-    // Solo el creador puede aceptar o rechazar
     if (event.creator.toString() !== userId) {
       return res
         .status(403)
@@ -64,39 +60,59 @@ const acceptOrRejectJoinRequest = async (req, res) => {
     }
 
     if (joinRequest.status !== "pending") {
-      // Comprobamos si la solicitud ya ha sido gestionada,si no esta en estado pendiente
       return res
         .status(400)
         .json({ message: "La solicitud ya fue gestionada" });
     }
 
     if (response === "accept") {
-      // Comprobamos si no esta lleno el evento antes de aceptar la solicitud
       if (
         event.maxParticipants !== null &&
         event.participants.length >= event.maxParticipants
       ) {
         return res.status(400).json({ message: "El evento ya está lleno" });
       }
-      //comprobamos si el usuario ya esta en el evento, si no lo esta, lo añadimos
+
       if (!event.participants.includes(joinRequest.userRequester.toString())) {
         event.participants.push(joinRequest.userRequester);
       }
+
       joinRequest.status = "accepted";
+      await event.save();
+    } else {
+      joinRequest.status = "rejected";
+    }
 
-      await event.save(); // Guardamos el evento con el nuevo participante
-      await joinRequest.save(); // Guardamos la solicitud con el nuevo estado
+    await joinRequest.save();
 
+    // Emitir notificación al usuario solicitante
+    const io = req.app.get("io");
+    if (io) {
+      io.to(joinRequest.userRequester._id.toString()).emit(
+        "event-notification",
+        {
+          type:
+            response === "accept"
+              ? "join-request-accepted"
+              : "join-request-rejected",
+          message:
+            response === "accept"
+              ? `Tu solicitud para unirte al evento "${event.title}" ha sido aceptada`
+              : `Tu solicitud para unirte al evento "${event.title}" ha sido rechazada`,
+          eventId: event._id,
+          date: new Date(),
+        }
+      );
+    }
+
+    // Respuesta final
+    if (response === "accept") {
       return res.status(200).json({
         message: "Usuario aceptado y unido al evento",
         updatedRequest: joinRequest,
         updatedEvent: event,
       });
     } else {
-      // Rechazad0
-      joinRequest.status = "rejected";
-      await joinRequest.save();
-
       return res
         .status(200)
         .json({ message: "Solicitud rechazada correctamente" });

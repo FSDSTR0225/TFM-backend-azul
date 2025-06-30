@@ -154,6 +154,8 @@ const joinEvent = async (req, res) => {
   const { eventId } = req.params; // Obtenemos el id del evento de la url
   const userId = req.user.id; // Obtenemos el id del usuario de la peticion, ya que lo guardamos en el token al registrarse o iniciar sesion
   try {
+    const io = req.app.get("io");
+
     const event = await Event.findById(eventId); // accedemos al evento por su id
 
     if (!event) {
@@ -217,6 +219,23 @@ const joinEvent = async (req, res) => {
         numberParticipants: updatedEvent.participants.length,
       };
 
+      // Evento publico,notificamos al creador del evento que un usuario ha solicitado unirse a su evento
+
+      if (io) {
+        //si tenemos socket, io.to,es decir,al socket del creador del evento,le emitimos un evento de notificacion
+        io.to(event.creator.toString()).emit("event-notification", {
+          type: "joined",
+          message: `El usuario ${req.user.username} se ha unido a tu evento "${event.title}"`,
+          fromUser: {
+            id: userId,
+            username: req.user.username,
+            avatar: req.user.avatar,
+          },
+          eventId: event._id,
+          date: new Date(),
+        });
+      }
+
       return res.status(200).json({
         message: `El usuario ${userId} se ha unido al evento`,
         currentEvent,
@@ -243,8 +262,22 @@ const joinEvent = async (req, res) => {
         userRequester: userId,
       });
 
+      if (io) {
+        io.to(event.creator.toString()).emit("event-notification", {
+          type: "request",
+          message: `El usuario "${req.user.username}" ha solicitado unirse a tu evento "${event.title}"`,
+          fromUser: {
+            id: userId,
+            username: req.user.username,
+            avatar: req.user.avatar,
+          },
+          eventId: event._id,
+          date: new Date(),
+        });
+      }
+
       return res.status(200).json({
-        message: `El usuario ${userId} ha solicitado unirse al evento`,
+        message: `El usuario "${userId}" ha solicitado unirse al evento`,
         newJoinRequest,
       });
     }
