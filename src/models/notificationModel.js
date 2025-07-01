@@ -12,6 +12,7 @@ const notificationSchema = new mongoose.Schema(
       enum: [
         "friend_request", // alguien te envía solicitud
         "friend_accepted", // alguien acepta tu solicitud
+        "friend_rejected", // alguien rechaza tu solicitud
         "event_invitation", // te invitan a evento
         "event_joined", // alguien se une a tu evento
         "event_join_request", // solicitud de unión a evento

@@ -238,11 +238,16 @@ const rejectFriendRequest = async (req, res) => {
     const sender = await User.findById(findRequest.userSender);
     const receiver = await User.findById(findRequest.userReceiver);
 
+    if (!sender || !receiver) {
+      console.warn("Usuario no encontrado al rechazar la solicitud");
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
     // guardamos notificación en BD
     const notification = await Notification.create({
       targetUser: sender._id,
       sender: receiver._id,
-      type: "friend_request_rejected",
+      type: "friend_rejected",
       message: `${receiver.username} ha rechazado tu solicitud de amistad.`,
     });
 

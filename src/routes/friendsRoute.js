@@ -19,7 +19,7 @@ router.post("/requests", verifyToken, createFriendRequest); // enviar solicitud 
 router.get("/requests/received", verifyToken, getFriendRequestsReceived); // obtener solicitudes de amistad recibidas
 router.get("/requests/sent", verifyToken, getFriendRequestsSent); // obtener solicitudes de amistad enviadas
 router.put("/requests/:requestId/accept", verifyToken, acceptFriendRequest); // aceptar solicitud de amistad
-router.put("/requests/:requestId/reject", verifyToken, rejectFriendRequest); // rechazar solicitud de amistad (opcional, no implementado en el controlador)
+router.put("/requests/:requestId/reject", verifyToken, rejectFriendRequest); // rechazar solicitud de amistad
 router.delete("/:friendId", verifyToken, deleteFriend); //eliminar amigo
 router.delete("/requests/:requestId", verifyToken, deleteMyFriendRequest); // eliminar solicitud de amistad enviada por el usuario autenticado
 
