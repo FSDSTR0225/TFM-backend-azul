@@ -2,9 +2,20 @@ const Notification = require("../models/notificationModel");
 
 const getNotifications = async (req, res) => {
   try {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000); // hace 24h
+
+    // Elimina notificaciones leídas que tienen más de 24h
+    await Notification.deleteMany({
+      targetUser: req.user.id,
+      read: true,
+      createdAt: { $lt: oneDayAgo },
+    });
+
+    // Luego devuelve las notificaciones restantes
     const notifs = await Notification.find({ targetUser: req.user.id }).sort({
       createdAt: -1,
     });
+
     return res.json(notifs);
   } catch (err) {
     console.error(err);
