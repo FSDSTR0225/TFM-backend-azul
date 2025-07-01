@@ -1,5 +1,6 @@
 const Event = require("../models/eventModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
+const Notification = require("../models/notificationModel");
 
 const getJoinRequests = async (req, res) => {
   const { eventId } = req.params;
@@ -85,23 +86,44 @@ const acceptOrRejectJoinRequest = async (req, res) => {
 
     await joinRequest.save();
 
+    // Almacenamos la notificación en la base de datos
+    await Notification.create({
+      targetUser: joinRequest.userRequester._id,
+      sender: userId,
+      type:
+        response === "accept"
+          ? "join_request_accepted"
+          : "join_request_rejected",
+      message:
+        response === "accept"
+          ? `Tu solicitud para unirte al evento "${event.title}" ha sido aceptada`
+          : `Tu solicitud para unirte al evento "${event.title}" ha sido rechazada`,
+      event: event._id,
+    });
+
     // Emitir notificación al usuario solicitante
     const io = req.app.get("io");
     if (io) {
+      const payload = {
+        type:
+          response === "accept"
+            ? "join-request-accepted"
+            : "join-request-rejected",
+        message:
+          response === "accept"
+            ? `Tu solicitud para unirte al evento "${event.title}" ha sido aceptada`
+            : `Tu solicitud para unirte al evento "${event.title}" ha sido rechazada`,
+        eventId: event._id,
+        date: new Date(),
+      };
+
       io.to(joinRequest.userRequester._id.toString()).emit(
-        "event-notification",
-        {
-          type:
-            response === "accept"
-              ? "join-request-accepted"
-              : "join-request-rejected",
-          message:
-            response === "accept"
-              ? `Tu solicitud para unirte al evento "${event.title}" ha sido aceptada`
-              : `Tu solicitud para unirte al evento "${event.title}" ha sido rechazada`,
-          eventId: event._id,
-          date: new Date(),
-        }
+        "new_notification",
+        payload
+      );
+      console.log(
+        "📣 [acceptOrRejectJoinRequest] notificación emitida a user B:",
+        payload
       );
     }
 

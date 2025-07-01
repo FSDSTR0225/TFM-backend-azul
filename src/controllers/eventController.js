@@ -1,5 +1,6 @@
 const Event = require("../models/eventModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
+const Notification = require("../models/notificationModel");
 
 const createEvent = async (req, res) => {
   try {
@@ -189,6 +190,15 @@ const joinEvent = async (req, res) => {
       // si el evento no requiere aprobacion, el usuario se une directamente al evento
       event.participants.push(userId); // añadimos el id del usuario al array de participantes del evento
       await event.save(); // guardamos el evento con el nuevo participante
+
+      await Notification.create({
+        targetUser: event.creator,
+        sender: userId,
+        type: "event_joined",
+        message: `El usuario ${req.user.username} se ha unido a tu evento "${event.title}"`,
+        event: event._id,
+      });
+
       const updatedEvent = await Event.findById(eventId)
         .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
         .populate("creator", "username avatar")
@@ -222,9 +232,8 @@ const joinEvent = async (req, res) => {
       // Evento publico,notificamos al creador del evento que un usuario ha solicitado unirse a su evento
 
       if (io) {
-        //si tenemos socket, io.to,es decir,al socket del creador del evento,le emitimos un evento de notificacion
-        io.to(event.creator.toString()).emit("event-notification", {
-          type: "joined",
+        const payload = {
+          type: "event_joined",
           message: `El usuario ${req.user.username} se ha unido a tu evento "${event.title}"`,
           fromUser: {
             id: userId,
@@ -233,9 +242,10 @@ const joinEvent = async (req, res) => {
           },
           eventId: event._id,
           date: new Date(),
-        });
+        };
+        console.log("📣 [joinEvent] emitiendo new_notification:", payload);
+        io.to(event.creator.toString()).emit("new_notification", payload);
       }
-
       return res.status(200).json({
         message: `El usuario ${userId} se ha unido al evento`,
         currentEvent,
@@ -255,6 +265,7 @@ const joinEvent = async (req, res) => {
             "Ya existe una solicitud para unirte a este evento, por favor, espera respuesta",
         });
       }
+
       // si no existe la solicitud, la creamos
       const newJoinRequest = await JoinEventRequest.create({
         event: eventId,
@@ -262,9 +273,16 @@ const joinEvent = async (req, res) => {
         userRequester: userId,
       });
 
+      await Notification.create({
+        targetUser: event.creator,
+        sender: userId,
+        type: "event_join_request",
+        message: `El usuario "${req.user.username}" ha solicitado unirse a tu evento "${event.title}"`,
+        event: event._id,
+      });
       if (io) {
-        io.to(event.creator.toString()).emit("event-notification", {
-          type: "request",
+        const payload = {
+          type: "event_join_request",
           message: `El usuario "${req.user.username}" ha solicitado unirse a tu evento "${event.title}"`,
           fromUser: {
             id: userId,
@@ -273,9 +291,10 @@ const joinEvent = async (req, res) => {
           },
           eventId: event._id,
           date: new Date(),
-        });
+        };
+        console.log("📣 [joinEvent] emitiendo new_notification:", payload);
+        io.to(event.creator.toString()).emit("new_notification", payload);
       }
-
       return res.status(200).json({
         message: `El usuario "${userId}" ha solicitado unirse al evento`,
         newJoinRequest,

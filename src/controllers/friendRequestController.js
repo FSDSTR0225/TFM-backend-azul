@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const FriendRequest = require("../models/friendRequestModel");
+const Notification = require("../models/notificationModel");
 
 const createFriendRequest = async (req, res) => {
   const userSender = req.user.id; // Obtenemos el id del usuario que está haciendo la solicitud
@@ -44,18 +45,27 @@ const createFriendRequest = async (req, res) => {
 
     await newRequest.save();
 
+    const sender = await User.findById(userSender).select("username avatar");
+
+    await Notification.create({
+      targetUser: userReceiverId,
+      sender: userSender,
+      type: "friend_request",
+      message: `${sender.username} te ha enviado una solicitud de amistad.`,
+    });
+
     const io = req.app.get("io");
     // Obtenemos los datos del remitente para mostrarlos en el frontend
-    const sender = await User.findById(userSender).select("username avatar");
-    io.to(userReceiverId).emit("newFriendRequest", {
-      _id: newRequest._id,
-      userSender: {
+
+    io.to(userReceiverId).emit("new_notification", {
+      type: "friend_request",
+      message: `${sender.username} te ha enviado una solicitud de amistad.`,
+      sender: {
         _id: sender._id,
         username: sender.username,
-        avatar: sender.avatar,
+        avatar: sender.avatar, // si quiero mostrarlo
       },
-      message: newRequest.message,
-      createdAt: newRequest.createdAt,
+      createdAt: new Date(),
     });
 
     return res.status(201).json(newRequest);
@@ -167,6 +177,28 @@ const acceptFriendRequest = async (req, res) => {
     await receiver.save();
     await findRequest.save();
 
+    // Guardamos notificación en BD
+    const notification = await Notification.create({
+      targetUser: sender._id,
+      sender: receiver._id,
+      type: "friend_accepted",
+      message: `${receiver.username} ha aceptado tu solicitud de amistad.`,
+    });
+
+    // Emitimos la notificación al usuario que ha enviado la solicitud
+    const io = req.app.get("io");
+    io.to(sender._id.toString()).emit("new_notification", {
+      _id: notification._id,
+      type: notification.type,
+      message: notification.message,
+      sender: {
+        _id: receiver._id,
+        username: receiver.username,
+        avatar: receiver.avatar,
+      },
+      createdAt: notification.createdAt,
+    });
+
     return res
       .status(200)
       .json({ message: "Solicitud aceptada", request: findRequest });
@@ -201,6 +233,32 @@ const rejectFriendRequest = async (req, res) => {
 
     findRequest.status = "rejected";
     await findRequest.save();
+
+    // preparamos datos para la notificación
+    const sender = await User.findById(findRequest.userSender);
+    const receiver = await User.findById(findRequest.userReceiver);
+
+    // guardamos notificación en BD
+    const notification = await Notification.create({
+      targetUser: sender._id,
+      sender: receiver._id,
+      type: "friend_request_rejected",
+      message: `${receiver.username} ha rechazado tu solicitud de amistad.`,
+    });
+
+    // Emit socket al emisor original
+    const io = req.app.get("io");
+    io.to(sender._id.toString()).emit("new_notification", {
+      _id: notification._id,
+      type: notification.type,
+      message: notification.message,
+      sender: {
+        _id: receiver._id,
+        username: receiver.username,
+        avatar: receiver.avatar,
+      },
+      createdAt: notification.createdAt,
+    });
 
     return res
       .status(200)
