@@ -16,11 +16,13 @@ const io = new Server(server, {
   },
 });
 
-app.set("io", io);
+app.set("io", io); // para que la instancia de io esté disponible en toda la aplicación
 
 const User = require("./src/models/userModel");
 const Chat = require("./src/models/chatModel");
 
+// io.on sirve para escuchar eventos de conexión de sockets
+// cuando un usuario se conecta, se emite un evento "connection" y se ejecuta
 io.on("connection", (socket) => {
   console.log("Un usuario se ha conectado");
 
