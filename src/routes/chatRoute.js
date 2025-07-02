@@ -5,17 +5,13 @@ const verifyToken = require("../middlewares/verifyToken");
 const {
   getChatByFriendId,
   getUnreadMessagesCount,
-  getUnreadMessagesPersonalChat,
+  getUnreadMessagesBySender,
   markMessagesAsRead,
 } = require("../controllers/chatController");
 
 router.get("/unread-count", verifyToken, getUnreadMessagesCount);
-router.get(
-  "/unread-count/:friendId",
-  verifyToken,
-  getUnreadMessagesPersonalChat
-);
+router.get("/unread-by-sender", verifyToken, getUnreadMessagesBySender);
 router.get("/:friendId", verifyToken, getChatByFriendId);
-router.post("/mark-read/:chatId", verifyToken, markMessagesAsRead);
+router.patch("/chats/:chatId/mark-as-read", verifyToken, markMessagesAsRead);
 
 module.exports = router;

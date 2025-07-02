@@ -54,28 +54,40 @@ const getUnreadMessagesCount = async (req, res) => {
   }
 };
 
-//MENSAJES NO LEÍDOS EN UN CHAT PERSONAL CON UN AMIGO
-const getUnreadMessagesPersonalChat = async (req, res) => {
+const getUnreadMessagesBySender = async (req, res) => {
   const userId = req.user.id;
-  const friendId = req.params.friendId;
 
   try {
-    const chat = await Chat.findOne({
-      participants: { $all: [userId, friendId] },
+    const counts = await Message.aggregate([
+      //aggregate se usa para agrupar,
+      // hacemos $match para filtrar los mensajes donde el user es el destinatario, que no están leídos y son del tipo chat
+      {
+        $match: {
+          recipient: userId,
+          read: false,
+          type: "chat",
+        },
+      },
+      {
+        // luego hacemos $group para agrupar por el campo $sender, que es el remitente del mensaje
+        // y contamos cuántos mensajes hay de cada remitente, $sum es para sumar 1 por cada mensaje
+        $group: {
+          _id: "$sender",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    //por cada elemento del array counts, creamos un objeto donde la clave es el ID del remitente y el valor es la cantidad de mensajes no leídos
+    const result = {};
+    counts.forEach((c) => {
+      result[c._id.toString()] = c.count;
     });
 
-    if (!chat) return res.json({ unread: 0 });
-
-    const unread = await Message.countDocuments({
-      _id: { $in: chat.messages },
-      recipient: userId,
-      read: false,
-    });
-
-    res.json({ unread });
+    res.json(result);
   } catch (error) {
-    console.error("Error al contar mensajes no leídos con amigo:", error);
-    res.status(500).json({ error: "Error al contar mensajes" });
+    console.error("Error al agrupar mensajes no leídos:", error);
+    res.status(500).json({ error: "Error al agrupar mensajes no leídos" });
   }
 };
 
@@ -108,6 +120,6 @@ const markMessagesAsRead = async (req, res) => {
 module.exports = {
   getChatByFriendId,
   getUnreadMessagesCount,
-  getUnreadMessagesPersonalChat,
+  getUnreadMessagesBySender,
   markMessagesAsRead,
 };
