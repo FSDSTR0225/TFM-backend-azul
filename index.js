@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
         // luego le decimos que nos devuelva el usuario actualizado con new: true y que solo queremos el username y onlineStatus.
       );
 
-      console.log(`Usuario ${userId} está en línea`);
+      console.log(`Usuario ${user.username} (${userId}) está en línea`);
 
       socket.broadcast.emit("userConnected", {
         message: `Usuario ${user.username} está en línea`,
