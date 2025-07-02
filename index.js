@@ -20,6 +20,7 @@ app.set("io", io); // para que la instancia de io esté disponible en toda la ap
 
 const User = require("./src/models/userModel");
 const Chat = require("./src/models/chatModel");
+const Message = require("./src/models/messageModel");
 
 // io.on sirve para escuchar eventos de conexión de sockets
 // cuando un usuario se conecta, se emite un evento "connection" y se ejecuta
@@ -59,48 +60,53 @@ io.on("connection", (socket) => {
 
   //escuchamo el evento "private message" para recibir mensajes privados
   socket.on("private message", async (msg) => {
+    console.log("Mensaje recibido", msg);
     //extraemos los datos del mensaje: id del que lo envia, id del destinatario y el contenido del mensaje
     const { senderId, receiverId, content } = msg;
     if (!senderId || !receiverId || !content) return;
 
     try {
       //buscamos en DB si ya existe un chat entre el remitente y el destinatario
-
+      const orderedParticipants = [senderId, receiverId].sort();
       let chat = await Chat.findOne({
-        participants: { $all: [senderId, receiverId] }, // ambos esten en ese chat
+        participants: orderedParticipants, // ambos esten en ese chat(ya ordenados)
       });
 
       //si no existe, creamos uno nuevo
       if (!chat) {
-        const orderedParticipants = [senderId, receiverId].sort(); // Ordenamos para evitar duplicados(chat con participantes A y B es el mismo que B y A)
+        // Ordenamos para evitar duplicados(chat con participantes A y B es el mismo que B y A)
         // Creamos un nuevo chat con los participantes ordenados
         chat = new Chat({
           participants: orderedParticipants,
-          messages: [],
         });
+        await chat.save(); // Guardamos el nuevo chat en la base de datos
       }
 
-      //Creamos el nuevo mensaje
-      const newMessage = {
+      //Creamos un objeto nuevo "mensaje" con los datos necesarios
+      //para guardar en la base de datos y enviar a los participantes del chat
+      const newMessage = await Message.create({
         sender: senderId,
         recipient: receiverId,
         content,
-        timestamp: new Date(),
-      };
+        type: "chat",
+      });
 
-      //Agregamos el nuevo mensaje al chat y lo guardamos en la base de datos
-      chat.messages.push(newMessage);
+      console.log("Mensaje guardado:", newMessage);
+
+      //Agregamos el ID del nuevo mensaje al array de mensajes del chat
+      chat.messages.push(newMessage._id);
       await chat.save();
+      console.log("Mensaje añadido al chat:", chat);
 
       // Enviamos el mensaje al destinatario
       io.to(receiverId).emit("private message", {
-        ...newMessage,
+        ...newMessage.toObject(), // Convertimos el mensaje a un objeto plano para evitar problemas de Mongoose
         chatId: chat._id,
       });
 
       // Tambien se le envia al remitente para que vea el mensaje enviado
       socket.emit("private message", {
-        ...newMessage,
+        ...newMessage.toObject(),
         chatId: chat._id,
       });
     } catch (error) {
@@ -115,10 +121,9 @@ io.on("connection", (socket) => {
 
     try {
       //al desconectarse,si el el socket.userId existe cambiamos el estado del usuario a offline
-      if (socket.userId) {
-        await User.findByIdAndUpdate(socket.userId, { onlineStatus: false });
-        console.log(`Usuario ${socket.userId} está offline`);
-      }
+
+      await User.findByIdAndUpdate(userId, { onlineStatus: false });
+      console.log(`Usuario ${userId} está offline`);
     } catch (error) {
       console.error("Error al actualizar onlineStatus (desconectado)", error);
     }

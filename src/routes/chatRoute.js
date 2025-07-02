@@ -6,14 +6,16 @@ const {
   getChatByFriendId,
   getUnreadMessagesCount,
   getUnreadMessagesPersonalChat,
+  markMessagesAsRead,
 } = require("../controllers/chatController");
 
-router.get("/chats/unread-count", verifyToken, getUnreadMessagesCount);
-router.get("/:friendId", verifyToken, getChatByFriendId);
+router.get("/unread-count", verifyToken, getUnreadMessagesCount);
 router.get(
   "/unread-count/:friendId",
   verifyToken,
   getUnreadMessagesPersonalChat
 );
+router.get("/:friendId", verifyToken, getChatByFriendId);
+router.post("/mark-read/:chatId", verifyToken, markMessagesAsRead);
 
 module.exports = router;

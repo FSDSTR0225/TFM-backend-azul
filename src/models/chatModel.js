@@ -11,32 +11,13 @@ const chatSchema = new mongoose.Schema(
     ],
     messages: [
       {
-        sender: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        recipient: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        content: {
-          type: String,
-          required: true,
-        },
-        timestamp: {
-          type: Date,
-          default: Date.now,
-        },
-        read: {
-          type: Boolean,
-          default: false,
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
       },
     ],
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Chat", chatSchema);
+const Chat = mongoose.model("Chat", chatSchema);
+module.exports = Chat;

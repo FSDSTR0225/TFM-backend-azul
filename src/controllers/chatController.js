@@ -1,4 +1,5 @@
 const Chat = require("../models/chatModel");
+const Message = require("../models/messageModel");
 const User = require("../models/userModel");
 
 const getChatByFriendId = async (req, res) => {
@@ -6,70 +7,70 @@ const getChatByFriendId = async (req, res) => {
   const friendId = req.params.friendId;
 
   try {
+    // Busca el chat entre ambos
     const chat = await Chat.findOne({
-      participants: { $all: [userId, friendId] }, // Busca un chat donde ambos usuarios son participantes
-    }).populate("messages.sender messages.recipient");
+      participants: { $all: [userId, friendId] },
+    });
 
     if (!chat) return res.json([]); // No hay mensajes aún
 
-    //busca el chat en el que en el array de participantes esten estos 2 user
-    await Chat.updateOne(
-      { participants: { $all: [userId, friendId] } },
-      { $set: { "messages.$[elem].read": true } }, // $set establece el valor de un campo a lo que se le indique,dentro del array mensajes los que cumplan cierto filtro(arrayFilters) cambialos a true
+    // Obtener mensajes del chat y populamos sender y recipient
+    const messages = await Message.find({ _id: { $in: chat.messages } })
+      .sort({ timestamp: 1 }) // opcional: para que estén en orden
+      .populate("sender recipient");
+
+    // Marcamos como leídos los mensajes que eran para el usuario actual y estaban sin leer
+    await Message.updateMany(
       {
-        arrayFilters: [{ "elem.recipient": userId, "elem.read": false }], // Solo actualiza(aplica el $Set) los mensajes que son para el usuario actual y que no han sido leídos
-      }
+        _id: { $in: chat.messages },
+        recipient: userId,
+        read: false,
+      },
+      { $set: { read: true } }
     );
 
-    res.json(chat.messages);
+    res.json(messages);
   } catch (err) {
     console.error("Error al obtener mensajes:", err);
     res.status(500).json({ error: "Error al obtener mensajes" });
   }
 };
 
+//TOTAL MENSAJES NO LEÍDOS DEL USUARIO
 const getUnreadMessagesCount = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Busca todos los chats donde el usuario es destinatario de mensajes no leídos
-    const chats = await Chat.find({
-      "messages.recipient": userId,
-      "messages.read": false,
-    });
-
-    let totalUnread = 0; // Contador de mensajes no leídos
-
-    // Recorre los chats y cuenta los mensajes no leídos para el usuario
-    chats.forEach((chat) => {
-      const count = chat.messages.filter(
-        (msg) => !msg.read && msg.recipient.toString() === userId
-      ).length;
-      totalUnread += count;
+    const totalUnread = await Message.countDocuments({
+      recipient: userId,
+      read: false,
+      type: "chat", // opcional si luego hay foros
     });
 
     res.json({ totalUnread });
   } catch (error) {
+    console.error("Error al contar mensajes no leídos:", error);
     res.status(500).json({ error: "Error al contar mensajes no leídos" });
   }
 };
 
+//MENSAJES NO LEÍDOS EN UN CHAT PERSONAL CON UN AMIGO
 const getUnreadMessagesPersonalChat = async (req, res) => {
   const userId = req.user.id;
   const friendId = req.params.friendId;
 
   try {
-    //buscamos chat entre el usuario actual y su amigo
     const chat = await Chat.findOne({
       participants: { $all: [userId, friendId] },
     });
 
     if (!chat) return res.json({ unread: 0 });
 
-    // filtramos los mensajes que son del destinatario actual y que no han sido leídos y los contamos
-    const unread = chat.messages.filter(
-      (msg) => msg.recipient.toString() === userId && !msg.read
-    ).length;
+    const unread = await Message.countDocuments({
+      _id: { $in: chat.messages },
+      recipient: userId,
+      read: false,
+    });
 
     res.json({ unread });
   } catch (error) {
@@ -78,8 +79,35 @@ const getUnreadMessagesPersonalChat = async (req, res) => {
   }
 };
 
+const markMessagesAsRead = async (req, res) => {
+  const userId = req.user.id;
+  const { chatId } = req.params;
+
+  try {
+    // primero verificamos que el chat exista
+    const chat = await Chat.findById(chatId);
+    if (!chat) return res.status(404).json({ error: "Chat no encontrado" });
+
+    await Message.updateMany(
+      // actualizamos los mensajes de ese chat que son del usuario actual y no están leídos a true
+      {
+        _id: { $in: chat.messages },
+        recipient: userId,
+        read: false,
+      },
+      { $set: { read: true } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error al marcar como leídos:", error);
+    res.status(500).json({ error: "Error al marcar mensajes" });
+  }
+};
+
 module.exports = {
   getChatByFriendId,
   getUnreadMessagesCount,
   getUnreadMessagesPersonalChat,
+  markMessagesAsRead,
 };

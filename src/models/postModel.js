@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Platform = require("./platformModel");
 
 const postSchema = new mongoose.Schema(
   {
@@ -32,22 +31,11 @@ const postSchema = new mongoose.Schema(
     },
     comments: [
       {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        text: {
-          type: String,
-          required: true,
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
       },
     ],
   },
-
   { timestamps: true }
 );
 
