@@ -12,7 +12,7 @@ const dashboardRoute = require("./routes/dashboardRoute");
 const friendsRoute = require("./routes/friendsRoute");
 const eventsRoute = require("./routes/eventsRoute");
 const joinRequestRoute = require("./routes/joinRequestRoutes");
-const widgetConfigRoute = require("./routes/WidgetConfigRoute");
+const widgetConfigRoute = require("./routes/widgetConfigRoute");
 const chatRoute = require("./routes/chatRoute");
 const notificationRoute = require("./routes/notificationRoute");
 
