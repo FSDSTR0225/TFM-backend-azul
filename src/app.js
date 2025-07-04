@@ -12,7 +12,9 @@ const dashboardRoute = require("./routes/dashboardRoute");
 const friendsRoute = require("./routes/friendsRoute");
 const eventsRoute = require("./routes/eventsRoute");
 const joinRequestRoute = require("./routes/joinRequestRoutes");
+const postRoute = require("./routes/postRoute");
 const widgetConfigRoute = require("./routes/widgetConfigRoute");
+
 const chatRoute = require("./routes/chatRoute");
 const notificationRoute = require("./routes/notificationRoute");
 
@@ -34,6 +36,7 @@ app.use("/dashboard", dashboardRoute);
 app.use("/friends", friendsRoute);
 app.use("/events", eventsRoute);
 app.use("/join-request", joinRequestRoute);
+app.use("/post", postRoute);
 app.use("/dashboard/widgets", widgetConfigRoute);
 app.use("/chats", chatRoute);
 app.use("/notifications", notificationRoute);
