@@ -24,7 +24,7 @@ const messageSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["chat", "forum"],
+    enum: ["chat", "forum", "chatbot"],
     default: "chat",
   },
 });

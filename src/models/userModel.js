@@ -104,6 +104,11 @@ const userSchema = new mongoose.Schema(
     gameSuggestions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Game" }],
     suggestedUsersLastUpdated: { type: Date, default: null },
     suggestedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    role: {
+      type: String,
+      enum: ["user", "admin", "bot"],
+      default: "user",
+    },
   },
   { timestamps: true }
 );

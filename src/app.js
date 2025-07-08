@@ -14,7 +14,7 @@ const eventsRoute = require("./routes/eventsRoute");
 const joinRequestRoute = require("./routes/joinRequestRoutes");
 const postRoute = require("./routes/postRoute");
 const widgetConfigRoute = require("./routes/widgetConfigRoute");
-
+const chatbotRoute = require("./routes/chatbotRoute");
 const chatRoute = require("./routes/chatRoute");
 const notificationRoute = require("./routes/notificationRoute");
 
@@ -40,5 +40,6 @@ app.use("/post", postRoute);
 app.use("/dashboard/widgets", widgetConfigRoute);
 app.use("/chats", chatRoute);
 app.use("/notifications", notificationRoute);
+app.use("/chatbot", chatbotRoute);
 
 module.exports = app;

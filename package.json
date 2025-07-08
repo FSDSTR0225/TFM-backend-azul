@@ -7,6 +7,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "nodemailer": "^7.0.4",
+    "openai": "^5.8.2",
     "socket.io": "^4.8.1"
   },
   "name": "tfm-backend-azul",
