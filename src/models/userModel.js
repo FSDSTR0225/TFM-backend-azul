@@ -109,6 +109,26 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin", "bot"],
       default: "user",
     },
+    steamId: {
+      type: String,
+      default: null,
+    },
+    steamProfileUrl: {
+      type: String,
+      default: null,
+    },
+    steamAvatar: {
+      type: String,
+      default: null,
+    },
+    steamName: {
+      type: String,
+      default: null,
+    },
+    useSteamAvatar: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

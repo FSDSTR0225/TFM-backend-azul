@@ -22,7 +22,7 @@ const getUsers = async (req, res) => {
 
     // Buscar los usuarios aplicando paginación
     const users = await User.find(filters) // Excluye el usuario actual
-      .select("username avatar favoriteGames platforms availability") // Selecciona los campos a devolver
+      .select("username avatar favoriteGames platforms availability steamId") // Selecciona los campos a devolver
       .populate("favoriteGames", "name , imageUrl")
       .populate("platforms", "name, icon")
       .sort({ _id: 1 }) // Ordena los jugadores de forma ascendente por ID
@@ -42,7 +42,9 @@ const getUsers = async (req, res) => {
 const getUserByUsername = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username }) // Buscamos el usuario por username
-      .select("username avatar favoriteGames platforms friends aviability") // Elegimos los campos a devolver de la ficha publica
+      .select(
+        "username avatar favoriteGames platforms friends availability steamId"
+      ) // Elegimos los campos a devolver de la ficha publica
       .populate("favoriteGames", "name")
       .populate("platforms", "name") // Elegimos que de favoritesGames  y platform se vea el nombre
       .populate("friends.user", "username avatar"); // Poblamos los amigos para que se vea el username y avatar
@@ -64,7 +66,7 @@ const getMe = async (req, res) => {
     const userId = req.user.id; // Obtenemos el userId del token decodificado en el middleware verifyToken
     const user = await User.findById(userId) // Buscamos al usuario por su ID
       .select(
-        "username avatar favoriteGames platforms availability friends email favoriteTags ratings" // Seleccionamos los campos que queremos devolver
+        "username avatar favoriteGames platforms availability friends email favoriteTags ratings steamId" // Seleccionamos los campos que queremos devolver
       )
       .populate("favoriteGames", "name imageUrl")
       .populate("platforms", "name icon")

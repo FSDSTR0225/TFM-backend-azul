@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./src/config/steamLogin");
 
 const app = require("./src/app");
 
