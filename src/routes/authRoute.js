@@ -22,7 +22,7 @@ router.post("/steam/link", (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.session.link2playUserId = decoded.id;
 
-    const redirectUrl = `http://localhost:3000/auth/steam/start`;
+    const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start`;
     res.json({ redirectUrl });
   } catch (err) {
     return res.status(401).json({ error: "Token inválido" });
