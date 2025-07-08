@@ -24,7 +24,12 @@ const app = express();
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true, // puedes quitar esto si NO usas cookies
+  })
+);
 
 // Rutas
 app.use("/auth", authRoute);

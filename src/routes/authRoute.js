@@ -15,17 +15,30 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 
 router.post("/steam/link", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Token no proporcionado" });
+  console.log("📥 Se está accediendo a la ruta POST /auth/steam/link");
+  const rawHeader = req.headers.authorization;
+  console.log("🔍 Token recibido en header Authorization:", rawHeader);
+  const token = rawHeader?.split(" ")[1];
+  console.log("🧪 Token extraído:", token);
+
+  if (!token) {
+    console.warn("⚠️ No se encontró token en la cabecera Authorization");
+    return res.status(401).json({ error: "Token no proporcionado" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("✅ Token decodificado correctamente:", decoded);
+
     req.session.link2playUserId = decoded.id;
 
     const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start`;
     res.json({ redirectUrl });
   } catch (err) {
-    return res.status(401).json({ error: "Token inválido" });
+    console.error("Error al verificar token:", err.message);
+    return res
+      .status(401)
+      .json({ error: "Token inválido", detail: err.message });
   }
 });
 
@@ -43,3 +56,18 @@ router.get(
 );
 
 module.exports = router;
+
+// router.post("/steam/link", (req, res) => {
+//   const token = req.headers.authorization?.split(" ")[1];
+//   if (!token) return res.status(401).json({ error: "Token no proporcionado" });
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     req.session.link2playUserId = decoded.id;
+
+//     const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start`;
+//     res.json({ redirectUrl });
+//   } catch (err) {
+//     return res.status(401).json({ error: "Token inválido" });
+//   }
+// });
