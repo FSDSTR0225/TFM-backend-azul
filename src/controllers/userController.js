@@ -4,7 +4,7 @@ const getUsers = async (req, res) => {
   try {
     // Obtener los parámetros de paginación desde la query
     const page = parseInt(req.query.page) || 1; // Página actual, por defecto 1
-    const limit = parseInt(req.query.limit) || 10; // Límite de resultados por página, por defecto 10
+    const limit = parseInt(req.query.limit) || 20; // Límite de resultados por página, por defecto 20
     const skip = (page - 1) * limit; // Cálculo para saltar registros
 
     const userId = req.user.id; // Obtiene el ID del usuario actual desde el token
