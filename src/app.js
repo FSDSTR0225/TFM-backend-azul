@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const session = require("express-session");
 
 const usersRoute = require("./routes/usersRoute");
 const platformsRoute = require("./routes/platformsRoute");
@@ -20,6 +21,18 @@ const notificationRoute = require("./routes/notificationRoute");
 const steamRoute = require("./routes/steamRoute");
 
 const app = express();
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "supersecret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
 
 // Middlewares
 app.use(express.json());

@@ -15,19 +15,18 @@ router.post("/register", registerUser);
 // Ruta para hacer login (autenticación)
 router.post("/login", loginUser);
 
-router.post("/steam/link", verifyToken, (req, res) => {
-  console.log("📥 Se está accediendo a la ruta POST /auth/steam/link");
-  console.log("✅ Usuario autenticado (req.user):", req.user);
-
-  // Guardamos el ID del usuario en la sesión para la autenticación con Steam
-  req.session.link2playUserId = req.user.id;
-
-  const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start`;
-  res.json({ redirectUrl });
-});
-
 router.get(
-  "/steam/start",
+  "/steam/link/:userId",
+  (req, res, next) => {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).send("ID de usuario inválido");
+    }
+
+    req.session.link2playUserId = userId;
+    next();
+  },
   passport.authenticate("steam", { failureRedirect: "/" })
 );
 
@@ -38,6 +37,34 @@ router.get(
     res.redirect("http://localhost:5173/lobby");
   }
 );
+
+// router.post("/steam/link", verifyToken, (req, res) => {
+//   try {
+//     console.log("📥 Se está accediendo a la ruta POST /auth/steam/link");
+//     console.log("✅ Usuario autenticado (req.user):", req.user);
+
+//     const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start?userId=${req.user.id}`;
+//     return res.json({ redirectUrl });
+//   } catch (err) {
+//     console.error("🔥 Error en /steam/link:", err);
+//     return res
+//       .status(500)
+//       .json({ error: "Error interno", detail: err.message });
+//   }
+// });
+
+// router.get(
+//   "/steam/start",
+//   passport.authenticate("steam", { failureRedirect: "/" })
+// );
+
+// router.get(
+//   "/steam/return",
+//   passport.authenticate("steam", { failureRedirect: "/" }),
+//   (req, res) => {
+//     res.redirect("http://localhost:5173/lobby");
+//   }
+// );
 
 module.exports = router;
 
