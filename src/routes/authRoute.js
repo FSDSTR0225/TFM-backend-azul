@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const verifyToken = require("../middlewares/verifyToken");
 const mongoose = require("mongoose");
 const passport = require("passport"); // importamos passport para la autenticación
 const {
@@ -14,32 +15,15 @@ router.post("/register", registerUser);
 // Ruta para hacer login (autenticación)
 router.post("/login", loginUser);
 
-router.post("/steam/link", (req, res) => {
+router.post("/steam/link", verifyToken, (req, res) => {
   console.log("📥 Se está accediendo a la ruta POST /auth/steam/link");
-  const rawHeader = req.headers.authorization;
-  console.log("🔍 Token recibido en header Authorization:", rawHeader);
-  const token = rawHeader?.split(" ")[1];
-  console.log("🧪 Token extraído:", token);
+  console.log("✅ Usuario autenticado (req.user):", req.user);
 
-  if (!token) {
-    console.warn("⚠️ No se encontró token en la cabecera Authorization");
-    return res.status(401).json({ error: "Token no proporcionado" });
-  }
+  // Guardamos el ID del usuario en la sesión para la autenticación con Steam
+  req.session.link2playUserId = req.user.id;
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("✅ Token decodificado correctamente:", decoded);
-
-    req.session.link2playUserId = decoded.id;
-
-    const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start`;
-    res.json({ redirectUrl });
-  } catch (err) {
-    console.error("Error al verificar token:", err.message);
-    return res
-      .status(401)
-      .json({ error: "Token inválido", detail: err.message });
-  }
+  const redirectUrl = `https://tfm-backend-azul-h44j.onrender.com/auth/steam/start`;
+  res.json({ redirectUrl });
 });
 
 router.get(
