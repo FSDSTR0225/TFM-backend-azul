@@ -442,7 +442,7 @@ const getMyCreatedEvents = async (req, res) => {
 };
 
 const getPastEvents = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.query.userId || req.user.id;
 
   try {
     const pastEvents = await Event.find({
