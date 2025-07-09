@@ -563,7 +563,7 @@ const getAllMyEvents = async (req, res) => {
     // .populate("creator", "username avatar")
 
     if (!myEvents || myEvents.length === 0) {
-      return res.status(200).json([]);
+      return res.status(200).json({ total: 0, eventos: [] });
     }
     const eventsFormatted = myEvents.map((event) => ({
       id: event._id.toString(),
@@ -615,7 +615,7 @@ const getMyJoinedEvents = async (req, res) => {
       .populate({ path: "creator", select: "username avatar" });
 
     if (!myEventsJoined || myEventsJoined.length === 0) {
-      return res.status(200).json([]);
+      return res.status(200).json({ total: 0, eventos: [] });
     }
 
     const eventsFormatted = myEventsJoined.map((event) => ({
