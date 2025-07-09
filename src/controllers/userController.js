@@ -4,7 +4,7 @@ const getUsers = async (req, res) => {
   try {
     // Obtener los parámetros de paginación desde la query
     const page = parseInt(req.query.page) || 1; // Página actual, por defecto 1
-    const limit = parseInt(req.query.limit) || 10; // Límite de resultados por página, por defecto 10
+    const limit = parseInt(req.query.limit) || 20; // Límite de resultados por página, por defecto 20
     const skip = (page - 1) * limit; // Cálculo para saltar registros
 
     const userId = req.user.id; // Obtiene el ID del usuario actual desde el token
@@ -22,9 +22,10 @@ const getUsers = async (req, res) => {
 
     // Buscar los usuarios aplicando paginación
     const users = await User.find(filters) // Excluye el usuario actual
-      .select("username avatar favoriteGames platforms availability steamId") // Selecciona los campos a devolver
+      .select("username avatar favoriteGames platforms availability friend steamId") // Selecciona los campos a devolver
       .populate("favoriteGames", "name , imageUrl")
-      .populate("platforms", "name, icon")
+      .populate("platforms", "name, icon") 
+      .populate("friends.user", "username avatar")
       .sort({ _id: 1 }) // Ordena los jugadores de forma ascendente por ID
 
       .skip(skip) // Salta los usuarios de páginas anteriores
@@ -42,11 +43,9 @@ const getUsers = async (req, res) => {
 const getUserByUsername = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username }) // Buscamos el usuario por username
-      .select(
-        "username avatar favoriteGames platforms friends availability steamId"
-      ) // Elegimos los campos a devolver de la ficha publica
-      .populate("favoriteGames", "name")
-      .populate("platforms", "name") // Elegimos que de favoritesGames  y platform se vea el nombre
+      .select("username avatar favoriteGames platforms friends aviability") // Elegimos los campos a devolver de la ficha publica
+      .populate("favoriteGames", "name imageUrl")
+      .populate("platforms", "name icon") // Elegimos que de favoritesGames  y platform se vea el nombre
       .populate("friends.user", "username avatar"); // Poblamos los amigos para que se vea el username y avatar
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
