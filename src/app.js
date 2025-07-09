@@ -39,7 +39,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin:["http://localhost:5173","https://686ec51a2cfdca916777de77--link2play.netlify.app"],
     credentials: true, // puedes quitar esto si NO usas cookies
   })
 );
