@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const ProfileViewModel = require("../models/profileViewModel");
 require("dotenv").config();
 const getUsers = async (req, res) => {
   try {
@@ -22,9 +23,11 @@ const getUsers = async (req, res) => {
 
     // Buscar los usuarios aplicando paginación
     const users = await User.find(filters) // Excluye el usuario actual
-      .select("username avatar favoriteGames platforms availability friend steamId") // Selecciona los campos a devolver
+      .select(
+        "username avatar favoriteGames platforms availability friend steamId"
+      ) // Selecciona los campos a devolver
       .populate("favoriteGames", "name , imageUrl")
-      .populate("platforms", "name, icon") 
+      .populate("platforms", "name, icon")
       .populate("friends.user", "username avatar")
       .sort({ _id: 1 }) // Ordena los jugadores de forma ascendente por ID
 
@@ -41,6 +44,7 @@ const getUsers = async (req, res) => {
 };
 
 const getUserByUsername = async (req, res) => {
+  const userId = req.user.id;
   try {
     const user = await User.findOne({ username: req.params.username }) // Buscamos el usuario por username
       .select("username avatar favoriteGames platforms friends aviability") // Elegimos los campos a devolver de la ficha publica
@@ -49,6 +53,14 @@ const getUserByUsername = async (req, res) => {
       .populate("friends.user", "username avatar"); // Poblamos los amigos para que se vea el username y avatar
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // Registrar la visita si no es su propio perfil
+    if (userId !== user._id.toString()) {
+      await ProfileViewModel.create({
+        viewer: userId,
+        viewed: user._id,
+      });
     }
 
     return res.status(200).json(user);
