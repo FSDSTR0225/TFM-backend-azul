@@ -2,6 +2,7 @@ const userWidgetConfig = require("../models/userWidgetConfigModel");
 const User = require("../models/userModel");
 const Game = require("../models/gameModel");
 const Event = require("../models/eventModel");
+const mongoose = require("mongoose");
 const JoinEventRequest = require("../models/joinEventRequestModel");
 
 const getWidgetConfig = async (req, res) => {
@@ -349,6 +350,14 @@ const getSuggestionsGames = async (req, res) => {
         .populate("platforms", "name")
         .select("name imageUrl screenshots tags platforms");
 
+      // 🧼 Limpiar los IDs que ya no existen
+      const validIds = games.map((g) => g._id.toString());
+
+      if (validIds.length < user.gameSuggestions.length) {
+        user.gameSuggestions = validIds;
+        await user.save(); // Actualizamos la lista
+      }
+
       const timeLeft = THREE_DAYS_MS - timePassed;
 
       return res.status(200).json({
@@ -365,19 +374,32 @@ const getSuggestionsGames = async (req, res) => {
       ...user.favoriteTags.others,
     ];
 
-    const excludedGames = user.favoriteGames.map((game) => game.toString());
+    const excludedGames = [
+      ...user.favoriteGames.map((id) => id.toString()),
+      ...user.gameSuggestions.map((id) => id.toString()),
+    ];
 
-    const newGames = await Game.find({
-      tags: { $in: tagPreferences },
-      _id: { $nin: excludedGames },
-    })
-      .limit(5)
+    const newGamesRaw = await Game.aggregate([
+      {
+        $match: {
+          tags: { $in: tagPreferences },
+          _id: {
+            $nin: excludedGames.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+        },
+      },
+      { $sample: { size: 10 } }, // más juegos para poder filtrar luego
+    ]);
+
+    // ⚠️ Luego necesitas populating manualmente porque aggregate no permite populate directamente:
+    const newGameIds = newGamesRaw.map((g) => g._id);
+    const newGames = await Game.find({ _id: { $in: newGameIds } })
       .populate("platforms", "name")
-      .select("name imageUrl screenshots tags platforms");
+      .select("name imageUrl screenshots tags platforms")
+      .limit(5); // solo te quedas con los 5 primeros válidos
 
-    user.gameSuggestions = newGames.map((g) => g._id); // guardamos los id de cada juego sugerido
-    user.lastGameSuggestionUpdate = now; //actualizamos la fecha de la última actualización a la fecha actual
-
+    user.gameSuggestions = newGames.map((g) => g._id);
+    user.lastGameSuggestionUpdate = now;
     await user.save();
 
     return res.status(200).json({
