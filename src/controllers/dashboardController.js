@@ -3,7 +3,6 @@ const Notification = require("../models/notificationModel");
 const Event = require("../models/eventModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
 const ProfileViewModel = require("../models/profileViewModel");
-const { create } = require("connect-mongo");
 
 const getDailySummary = async (req, res) => {
   const userId = req.user.id;
