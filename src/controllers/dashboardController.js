@@ -1,6 +1,7 @@
 const FriendRequest = require("../models/friendRequestModel");
 const Notification = require("../models/notificationModel");
 const Event = require("../models/eventModel");
+const User = require("../models/userModel");
 const JoinEventRequest = require("../models/joinEventRequestModel");
 const ProfileViewModel = require("../models/profileViewModel");
 
@@ -185,11 +186,11 @@ const getDailySummary = async (req, res) => {
     })
       .populate({
         path: "event", // hacemos populate del evento, ya que el joinEventRequest tiene un campo que hace referencia al evento,path es el nombre del campo que hace referencia al evento
-        match: { creator: userId }, // solo queremos los eventos que ha creado el usuario, match es para filtrar los eventos que queremos que nos devuelva (creator === userId)
-        select: "title", // seleccionamos los campos que queremos que nos devuelva
+        match: { creator: userId, date: { $gte: now } }, // solo queremos los eventos que ha creado el usuario y fecha mayor a hoy, match es para filtrar los eventos que queremos que nos devuelva (creator === userId)
+        select: "title date",
+        populate: { path: "game", select: "name" }, // seleccionamos los campos que queremos que nos devuelva
       })
-      .populate("userRequester", "username avatar")
-      .populate({ path: "event", populate: { path: "game", select: "name" } }); // hacemos populate del usuario que ha hecho la solicitud al evento, ya que el joinEventRequest tiene un campo que hace referencia al usuario, y le decimos que solo queremos el username y el avatar
+      .populate("userRequester", "username avatar"); // hacemos populate del usuario que ha solicitado unirse al evento, para obtener su username y avatar
 
     const acceptedJoinEventReq = await JoinEventRequest.find({
       userRequester: userId,
