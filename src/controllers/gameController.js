@@ -87,7 +87,7 @@ const getGames = async (req, res) => {
 const getGameById = async (req, res) => {
   const { id } = req.params; // Obtenemos el id del juego de la url
   try {
-    const gameFromMongo = await Game.findOne({ rawgId: id }).populate(
+    let gameFromMongo = await Game.findOne({ rawgId: id }).populate(
       "platforms",
       "name slug"
     ); // Buscamos el juego por su RawgId en la base de datos (juegos cuya rawgId=Id de url),y no buscamos por findById porque no buscamos _.id de mongo sino la rawgId ya almacenada, y con el populate llenamos la propiedad platforms con el nombre y slug de la plataforma(no solo el id de la paltaforma que devolveria el juego).
