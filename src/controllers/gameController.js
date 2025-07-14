@@ -86,6 +86,7 @@ const getGames = async (req, res) => {
 
 const getGameById = async (req, res) => {
   const { id } = req.params; // Obtenemos el id del juego de la url
+
   try {
     let gameFromMongo = await Game.findOne({ rawgId: id }).populate(
       "platforms",
@@ -118,7 +119,14 @@ const getGameById = async (req, res) => {
     ); // Si no existe en la base de datos, lo buscamos en la API de RAWG.
 
     if (!response.ok) {
-      throw new Error("Error fetching game from RAWG"); // Si la respuesta no es ok, lanzamos un error.
+      console.warn("RAWG falló. Devolviendo lo que haya en Mongo.");
+      if (gameFromMongo) {
+        return res.status(200).json(gameFromMongo);
+      } else {
+        return res
+          .status(404)
+          .json({ error: "Juego no encontrado ni en Mongo ni en RAWG" });
+      }
     }
 
     const data = await response.json(); // Si la respuesta es ok, la convertimos a json.
