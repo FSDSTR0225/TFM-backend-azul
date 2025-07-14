@@ -1,6 +1,7 @@
 require("dotenv").config();
 const Game = require("../models/gameModel");
 const Platform = require("../models/platformModel");
+const mongoose = require("mongoose");
 
 const API_KEY = process.env.RAWG_API_KEY;
 
