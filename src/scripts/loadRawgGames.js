@@ -6,8 +6,8 @@ const Platform = require("../models/platformModel");
 const API_KEY = process.env.RAWG_API_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 
-const startPage = 601;
-const endPage = 650; // Cambio esto si queremos más páginas (650 primeras paginas exportadas)
+const startPage = 1186;
+const endPage = 1200; // Cambio esto si queremos más páginas (1186 primeras paginas exportadas)
 const pageSize = 25;
 
 async function importGames() {
