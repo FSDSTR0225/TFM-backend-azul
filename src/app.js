@@ -24,6 +24,17 @@ const translateRoute = require("./routes/translateRoute");
 const app = express();
 
 app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://link2play.netlify.app",
+      "https://686ec51a2cfdca916777de77--link2play.netlify.app",
+    ],
+    credentials: true,
+  })
+);
+
+app.use(
   session({
     secret: process.env.SESSION_SECRET || "supersecret-key",
     resave: false,
@@ -38,16 +49,6 @@ app.use(
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
-
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://link2play.netlify.app",
-      "https://686ec51a2cfdca916777de77--link2play.netlify.app",
-    ],
-  })
-);
 
 // Rutas
 app.use("/auth", authRoute);
