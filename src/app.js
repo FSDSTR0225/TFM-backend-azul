@@ -44,7 +44,6 @@ app.use(
       "https://link2play.netlify.app",
       "https://686ec51a2cfdca916777de77--link2play.netlify.app",
     ],
-    credentials: true,
   })
 );
 
