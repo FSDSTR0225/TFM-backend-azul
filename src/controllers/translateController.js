@@ -6,7 +6,7 @@ const translateDescription = async (req, res) => {
   }
 
   try {
-    const apiRes = await fetch("https://libretranslate.com/translate", {
+    const apiRes = await fetch("https://libretranslate.de/translate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -18,7 +18,7 @@ const translateDescription = async (req, res) => {
     });
 
     const data = await apiRes.json();
-    res.json({ translatedText: data.translatedText });
+    res.json({ translatedText: data[0]?.translatedText });
   } catch (error) {
     console.error("Error en traducción:", error);
     res.status(500).json({ error: "Error al traducir el texto." });
