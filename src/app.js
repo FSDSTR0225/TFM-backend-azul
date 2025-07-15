@@ -41,10 +41,10 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://link2play.netlify.app/",
+      "https://link2play.netlify.app",
       "https://686ec51a2cfdca916777de77--link2play.netlify.app",
     ],
-    credentials: true, // puedes quitar esto si NO usas cookies
+    credentials: true,
   })
 );
 
