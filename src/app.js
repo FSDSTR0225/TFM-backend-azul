@@ -19,6 +19,7 @@ const chatbotRoute = require("./routes/chatbotRoute");
 const chatRoute = require("./routes/chatRoute");
 const notificationRoute = require("./routes/notificationRoute");
 const steamRoute = require("./routes/steamRoute");
+const translateRoute = require("./routes/translateRoute");
 
 const app = express();
 
@@ -37,6 +38,20 @@ app.use(
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
+
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+//   if (req.method === "OPTIONS") {
+//     return res.sendStatus(200);
+//   }
+//   next();
+// });
+
 app.use(
   cors({
     origin: [
@@ -64,5 +79,6 @@ app.use("/chats", chatRoute);
 app.use("/notifications", notificationRoute);
 app.use("/chatbot", chatbotRoute);
 app.use("/steam", steamRoute);
+app.use("/translate", translateRoute);
 
 module.exports = app;
