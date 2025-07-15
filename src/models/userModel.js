@@ -64,12 +64,12 @@ const userSchema = new mongoose.Schema(
     ],
     avatar: {
       type: String,
-      default: "https://api.dicebear.com/7.x/adventurer/svg?seed=username", //corregir!!! y poner url cloudinary para avatar por defecto
+      default: "https://res.cloudinary.com/dem2fr34y/image/upload/v1752591801/blankImg_vt97qn.jpg"
     },
     availability: {
       type: String,
       default: "No disponible",
-      enum: ["No disponible", "Mañana", "Tarde", "Noche", "Todo el día"],
+      enum: ["notAvailable", "morning", "afternoon", "night", "allDay"],
     },
     onlineStatus: {
       type: Boolean,
