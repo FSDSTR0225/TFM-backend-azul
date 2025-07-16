@@ -650,6 +650,28 @@ const getMyJoinedEvents = async (req, res) => {
   }
 };
 
+const getEventsByGame = async (req, res) => {
+  try {
+    const { gameId } = req.query;
+
+    if (!gameId) {
+      return res.status(400).json({ message: "gameId requerido" });
+    }
+
+    const now = new Date();
+
+    const count = await Event.countDocuments({
+      gameId,
+      date: { $gte: now }, // solo eventos futuros o activos
+    });
+
+    res.json({ count });
+  } catch (error) {
+    console.error("Error al contar eventos por juego:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   createEvent,
   getEvents,
@@ -663,4 +685,5 @@ module.exports = {
   leaveEvent,
   getAllMyEvents,
   getMyJoinedEvents,
+  getEventsByGame,
 };
