@@ -201,29 +201,32 @@ const getGameById = async (req, res) => {
 const getFriendsWhoLikeGame = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { id: gameId } = req.params;
+    const { id: rawgId } = req.params;
 
     console.log("👉 userId recibido:", userId);
-    console.log("👉 gameId recibido:", gameId);
+    console.log("👉 rawgId recibido:", rawgId);
 
-    // Cargamos los usuarios amigos (ojo al .populate("friends.user"))
+    // 1. Buscar el juego en la colección Game a partir de su rawgId
+    const game = await Game.findOne({ rawgId });
+    if (!game) {
+      return res.status(404).json({ message: "Juego no encontrado" });
+    }
+
+    const gameId = game._id.toString();
+    console.log("🎮 game._id real:", gameId);
+
+    // 2. Cargar usuario con amigos
     const user = await User.findById(userId).populate("friends.user");
     if (!user) {
-      console.log("❌ Usuario no encontrado");
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    console.log("🧠 Usuario y amigos:", user.username, user.friends.length);
-
+    // 3. Filtrar amigos que tengan este juego como favorito
     const matchingFriends = user.friends.filter(({ user: friend }) => {
       if (!friend) return false;
-
-      console.log("🔎 Revisando amigo:", friend.username);
-      console.log("🎮 Juegos favoritos del amigo:", friend.favoriteGames);
-
       return (
         Array.isArray(friend.favoriteGames) &&
-        friend.favoriteGames.includes(gameId)
+        friend.favoriteGames.some((favId) => favId.toString() === gameId)
       );
     });
 
@@ -232,8 +235,6 @@ const getFriendsWhoLikeGame = async (req, res) => {
       username: friend.username,
       avatar: friend.avatar,
     }));
-
-    console.log("✅ Amigos que sí coinciden:", result);
 
     res.status(200).json(result);
   } catch (err) {
