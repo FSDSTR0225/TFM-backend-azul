@@ -206,7 +206,8 @@ const getFriendsWhoLikeGame = async (req, res) => {
     console.log("👉 userId recibido:", userId);
     console.log("👉 gameId recibido:", gameId);
 
-    const user = await User.findById(userId).populate("friends");
+    // Cargamos los usuarios amigos (ojo al .populate("friends.user"))
+    const user = await User.findById(userId).populate("friends.user");
     if (!user) {
       console.log("❌ Usuario no encontrado");
       return res.status(404).json({ message: "Usuario no encontrado" });
@@ -214,13 +215,19 @@ const getFriendsWhoLikeGame = async (req, res) => {
 
     console.log("🧠 Usuario y amigos:", user.username, user.friends.length);
 
-    const matchingFriends = user.friends.filter((friend) => {
-      console.log(`👀 Revisando amigo ${friend.username}`);
+    const matchingFriends = user.friends.filter(({ user: friend }) => {
+      if (!friend) return false;
+
+      console.log("🔎 Revisando amigo:", friend.username);
       console.log("🎮 Juegos favoritos del amigo:", friend.favoriteGames);
-      return friend.favoriteGames.includes(gameId);
+
+      return (
+        Array.isArray(friend.favoriteGames) &&
+        friend.favoriteGames.includes(gameId)
+      );
     });
 
-    const result = matchingFriends.map((friend) => ({
+    const result = matchingFriends.map(({ user: friend }) => ({
       _id: friend._id,
       username: friend.username,
       avatar: friend.avatar,
