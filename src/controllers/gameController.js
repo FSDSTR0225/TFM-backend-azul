@@ -230,6 +230,14 @@ const getFriendsWhoLikeGame = async (req, res) => {
       );
     });
 
+    console.log("🧠 Amigos del usuario:");
+    user.friends.forEach(({ user: friend }) => {
+      console.log({
+        friendUsername: friend?.username,
+        favoriteGames: friend?.favoriteGames,
+      });
+    });
+
     const result = matchingFriends.map(({ user: friend }) => ({
       _id: friend._id,
       username: friend.username,
