@@ -251,7 +251,88 @@ const getFriendsWhoLikeGame = async (req, res) => {
   }
 };
 
-module.exports = { getGames, getGameById, getFriendsWhoLikeGame };
+const getSimilarGames = async (req, res) => {
+  try {
+    const { id } = req.params; // Obtenemos el id del juego de la url
+    const isMongoId = mongoose.Types.ObjectId.isValid(id);
+
+    const query = isMongoId
+      ? { $or: [{ _id: id }, { rawgId: id }] }
+      : { rawgId: id };
+
+    const currentGame = await Game.findOne(query); // buscamos el juego por id en mongo
+    if (!currentGame) {
+      return res.status(404).json({ message: "Juego no encontrado" });
+    }
+
+    const { tags, genres, developers, rawgId } = currentGame; // Obtenemos las etiquetas, géneros y desarrollador del juego actual.
+
+    // Paso 1: buscar similares en Mongo
+    let localResults = await Game.find({
+      _id: isMongoId ? { $ne: id } : { $ne: currentGame._id }, // Excluimos el juego actual de los resultados, miramos si es un id de mongo o rawgId
+      $or: [
+        { tags: { $in: tags } },
+        { genres: { $in: genres } }, // Buscamos juegos que tengan al menos una etiqueta o género en común
+        { developers: { $in: developers } }, // o que sean desarrollados por el mismo desarrollador
+      ],
+    })
+      .select("name imageUrl rawgId")
+      .limit(5);
+
+    if (localResults.length >= 3) {
+      return res.status(200).json(localResults.slice(0, 5));
+    }
+
+    // Paso 2: Fallback a RAWG con filtros
+    const rawgQuery = new URLSearchParams({
+      // Creamos un objeto URLSearchParams para construir la query de RAWG
+      tags: tags?.slice(0, 3).join(","), // Limitamos a 3 etiquetas
+      genres: genres?.slice(0, 2).join(","), // Limitamos a 2 géneros
+      developers: developers?.[0] || "", // Usamos el primer desarrollador si existe
+      page_size: 5,
+      key: API_KEY,
+    }).toString();
+
+    const rawgRes = await fetch(`https://api.rawg.io/api/games?${rawgQuery}`);
+
+    if (!rawgRes.ok) {
+      throw new Error("Error al obtener sugerencias desde RAWG");
+    }
+
+    const rawgData = await rawgRes.json();
+
+    // Transformamos los juegos obtenidos de RAWG a un formato compatible con nuestra base de datos
+    const rawgGames = rawgData.results.map((game) => ({
+      rawgId: String(game.id),
+      name: game.name,
+      imageUrl: game.background_image,
+      genres: game.genres.map((g) => g.name),
+      platforms: game.platforms.map((p) => p.platform.slug),
+      released: game.released,
+      metacritic: game.metacritic,
+    }));
+
+    // Elimina duplicados por nombre
+    const combined = [
+      ...localResults,
+      ...rawgGames.filter(
+        (rawg) => !localResults.some((local) => local.name === rawg.name)
+      ),
+    ].slice(0, 5);
+
+    res.status(200).json(combined);
+  } catch (error) {
+    console.error("Error en getSimilarGames:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+module.exports = {
+  getGames,
+  getGameById,
+  getFriendsWhoLikeGame,
+  getSimilarGames,
+};
 
 //Tags irrelevantes
 

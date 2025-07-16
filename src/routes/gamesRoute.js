@@ -4,12 +4,14 @@ const {
   getGames,
   getGameById,
   getFriendsWhoLikeGame,
+  getSimilarGames,
 } = require("../controllers/gameController");
 const { getPlatformsForGame } = require("../controllers/platformController");
 const verifyToken = require("../middlewares/verifyToken");
 
 router.get("/", getGames);
 router.get("/:id", getGameById);
+router.get("/:id/similar", getSimilarGames);
 router.get("/:id/platforms", getPlatformsForGame);
 router.get("/:id/friends-like", verifyToken, getFriendsWhoLikeGame);
 
