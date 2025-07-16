@@ -268,28 +268,41 @@ const getSimilarGames = async (req, res) => {
 
     const { genres, developers } = currentGame;
 
-    // Evitar búsquedas sin datos útiles
     if (!genres?.length && !developers?.length) {
       return res.status(200).json([]);
     }
 
-    // === FILTRO MÁS PRECISO: SOLO genres Y developers ===
-    let localResults = await Game.find({
+    const allGames = await Game.find({
       _id: { $ne: currentGame._id },
-      $or: [
-        { genres: { $in: genres || [] } },
-        { developers: { $in: developers || [] } },
-      ],
-    })
-      .select("name imageUrl rawgId")
-      .limit(10); // Cogemos 10 para tener margen al filtrar duplicados con RAWG
+    }).select("name imageUrl rawgId genres developers");
 
-    // Si encontramos al menos 3 locales, devolvemos directamente
-    if (localResults.length >= 3) {
-      return res.status(200).json(localResults.slice(0, 5));
+    // Calcular puntuación por similitud
+    const scoredGames = allGames
+      .map((game) => {
+        let score = 0;
+
+        // Coincidencia exacta de developers
+        if (game.developers?.some((dev) => developers?.includes(dev))) {
+          score += 2;
+        }
+
+        // Coincidencias en géneros
+        if (game.genres?.length && genres?.length) {
+          const commonGenres = game.genres.filter((g) => genres.includes(g));
+          score += commonGenres.length; // 1 punto por género
+        }
+
+        return { ...game._doc, score };
+      })
+      .filter((g) => g.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    if (scoredGames.length >= 3) {
+      return res.status(200).json(scoredGames);
     }
 
-    // === FALLBACK A RAWG ===
+    // Fallback a RAWG si hay pocos resultados
     const rawgQuery = new URLSearchParams({
       genres: genres?.slice(0, 2).join(",") || "",
       developers: developers?.[0] || "",
@@ -314,11 +327,10 @@ const getSimilarGames = async (req, res) => {
       metacritic: game.metacritic,
     }));
 
-    // Combinar resultados sin duplicados por nombre
     const combined = [
-      ...localResults,
+      ...scoredGames,
       ...rawgGames.filter(
-        (rawg) => !localResults.some((local) => local.name === rawg.name)
+        (rawg) => !scoredGames.some((local) => local.name === rawg.name)
       ),
     ].slice(0, 5);
 
