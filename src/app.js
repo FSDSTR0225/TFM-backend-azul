@@ -23,13 +23,15 @@ const translateRoute = require("./routes/translateRoute");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://link2play.netlify.app",
+  "https://686ec51a2cfdca916777de77--link2play.netlify.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://link2play.netlify.app",
-      "https://686ec51a2cfdca916777de77--link2play.netlify.app",
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -53,6 +55,10 @@ app.use(
     },
   })
 );
+
+const passport = require("../src/config/steamLogin");
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Middlewares
 app.use(express.json());
