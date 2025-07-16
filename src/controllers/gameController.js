@@ -203,13 +203,22 @@ const getFriendsWhoLikeGame = async (req, res) => {
     const userId = req.user._id;
     const { id: gameId } = req.params;
 
-    // Obtén al usuario actual con su lista de amigos
-    const user = await User.findById(userId).populate("friends");
+    console.log("👉 userId recibido:", userId);
+    console.log("👉 gameId recibido:", gameId);
 
-    // Filtra amigos que tengan el juego como favorito
-    const matchingFriends = user.friends.filter((friend) =>
-      friend.favoriteGames.some((game) => game.rawgId === gameId)
-    );
+    const user = await User.findById(userId).populate("friends");
+    if (!user) {
+      console.log("❌ Usuario no encontrado");
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    console.log("🧠 Usuario y amigos:", user.username, user.friends.length);
+
+    const matchingFriends = user.friends.filter((friend) => {
+      console.log(`👀 Revisando amigo ${friend.username}`);
+      console.log("🎮 Juegos favoritos del amigo:", friend.favoriteGames);
+      return friend.favoriteGames.includes(gameId);
+    });
 
     const result = matchingFriends.map((friend) => ({
       _id: friend._id,
@@ -217,9 +226,12 @@ const getFriendsWhoLikeGame = async (req, res) => {
       avatar: friend.avatar,
     }));
 
+    console.log("✅ Amigos que sí coinciden:", result);
+
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching friends" });
+    console.error("❌ Error interno en getFriendsWhoLikeGame:", err);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
