@@ -200,7 +200,7 @@ const getGameById = async (req, res) => {
 
 const getFriendsWhoLikeGame = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
     const { id: gameId } = req.params;
 
     console.log("👉 userId recibido:", userId);
