@@ -253,55 +253,57 @@ const getFriendsWhoLikeGame = async (req, res) => {
 
 const getSimilarGames = async (req, res) => {
   try {
-    const { id } = req.params; // Obtenemos el id del juego de la url
+    const { id } = req.params;
     const isMongoId = mongoose.Types.ObjectId.isValid(id);
 
     const query = isMongoId
       ? { $or: [{ _id: id }, { rawgId: id }] }
       : { rawgId: id };
 
-    const currentGame = await Game.findOne(query); // buscamos el juego por id en mongo
+    const currentGame = await Game.findOne(query);
+
     if (!currentGame) {
       return res.status(404).json({ message: "Juego no encontrado" });
     }
 
-    const { tags, genres, developers, rawgId } = currentGame; // Obtenemos las etiquetas, géneros y desarrollador del juego actual.
+    const { genres, developers } = currentGame;
 
-    // Paso 1: buscar similares en Mongo
+    // Evitar búsquedas sin datos útiles
+    if (!genres?.length && !developers?.length) {
+      return res.status(200).json([]);
+    }
+
+    // === FILTRO MÁS PRECISO: SOLO genres Y developers ===
     let localResults = await Game.find({
-      _id: isMongoId ? { $ne: id } : { $ne: currentGame._id }, // Excluimos el juego actual de los resultados, miramos si es un id de mongo o rawgId
+      _id: { $ne: currentGame._id },
       $or: [
-        { tags: { $in: tags } },
-        { genres: { $in: genres } }, // Buscamos juegos que tengan al menos una etiqueta o género en común
-        { developers: { $in: developers } }, // o que sean desarrollados por el mismo desarrollador
+        { genres: { $in: genres || [] } },
+        { developers: { $in: developers || [] } },
       ],
     })
       .select("name imageUrl rawgId")
-      .limit(5);
+      .limit(10); // Cogemos 10 para tener margen al filtrar duplicados con RAWG
 
+    // Si encontramos al menos 3 locales, devolvemos directamente
     if (localResults.length >= 3) {
       return res.status(200).json(localResults.slice(0, 5));
     }
 
-    // Paso 2: Fallback a RAWG con filtros
+    // === FALLBACK A RAWG ===
     const rawgQuery = new URLSearchParams({
-      // Creamos un objeto URLSearchParams para construir la query de RAWG
-      tags: tags?.slice(0, 3).join(","), // Limitamos a 3 etiquetas
-      genres: genres?.slice(0, 2).join(","), // Limitamos a 2 géneros
-      developers: developers?.[0] || "", // Usamos el primer desarrollador si existe
+      genres: genres?.slice(0, 2).join(",") || "",
+      developers: developers?.[0] || "",
       page_size: 5,
       key: API_KEY,
     }).toString();
 
     const rawgRes = await fetch(`https://api.rawg.io/api/games?${rawgQuery}`);
-
     if (!rawgRes.ok) {
       throw new Error("Error al obtener sugerencias desde RAWG");
     }
 
     const rawgData = await rawgRes.json();
 
-    // Transformamos los juegos obtenidos de RAWG a un formato compatible con nuestra base de datos
     const rawgGames = rawgData.results.map((game) => ({
       rawgId: String(game.id),
       name: game.name,
@@ -312,7 +314,7 @@ const getSimilarGames = async (req, res) => {
       metacritic: game.metacritic,
     }));
 
-    // Elimina duplicados por nombre
+    // Combinar resultados sin duplicados por nombre
     const combined = [
       ...localResults,
       ...rawgGames.filter(
