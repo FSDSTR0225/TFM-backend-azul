@@ -650,29 +650,30 @@ const getMyJoinedEvents = async (req, res) => {
   }
 };
 
+const mongoose = require("mongoose");
+
 const getEventsByGame = async (req, res) => {
   try {
     const { gameId } = req.query;
-
-    console.log("🧩 gameId recibido:", gameId);
 
     if (!gameId) {
       return res.status(400).json({ message: "gameId requerido" });
     }
 
     const now = new Date();
-    console.log("🕒 Fecha actual:", now);
 
     const count = await Event.countDocuments({
-      gameId,
-      date: { $gte: now }, // solo eventos futuros o activos
+      game: new mongoose.Types.ObjectId(gameId), // 👈 CAMBIO AQUÍ
+      date: { $gte: now },
     });
 
+    console.log("🧩 gameId recibido:", gameId);
+    console.log("🕒 Fecha actual:", now);
     console.log("📊 Eventos encontrados:", count);
 
     res.json({ count });
   } catch (error) {
-    console.error("❌ Error al contar eventos por juego:", error);
+    console.error("Error al contar eventos por juego:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
