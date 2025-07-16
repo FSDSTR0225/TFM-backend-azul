@@ -15,9 +15,9 @@ const searchAll = async (req, res) => {
     // Buscamos en la base de datos los usuarios, juegos y eventos que coincidan con el query
     //  (el username que se escribe en el input de busqueda), y le decimos que solo queremos el username y avatar de los usuarios,
     //  el name y imageUrl de los juegos y el title, date, game y creator de los eventos.
-    const usersPromise = User.find({ username: regex }).select(
-      "username avatar"
-    );
+    const usersPromise = User.find({ username: regex })
+      .select("username avatar favoriteGames")
+      .populate("favoriteGames", "name");
     const gamesPromise = Game.find({ name: regex }).select(
       "name imageUrl rawgId"
     );
@@ -60,7 +60,9 @@ const searchOnlyUsers = async (req, res) => {
   try {
     const users = await User.find({
       username: { $regex: query, $options: "i" },
-    }).select("username avatar"); //buscamos en la base de datos los usuarios que coincidan con el query (el username que se escribe en el input de busqueda), y le decimos que solo queremos el username y avatar de los usuarios.
+    })
+      .select("username avatar favoriteGames")
+      .populate("favoriteGames", "name"); //buscamos en la base de datos los usuarios que coincidan con el query (el username que se escribe en el input de busqueda), y le decimos que solo queremos el username y avatar de los usuarios.
 
     return res.status(200).json({ users }); //devolvemos los resultados con los usuarios encontrados que coincidan con la busqueda.
   } catch (error) {
