@@ -69,8 +69,8 @@ const userSchema = new mongoose.Schema(
     },
     availability: {
       type: String,
-      default: "notAvailable",
-      enum: ["notAvailable", "morning", "afternoon", "night", "allDay"],
+      default: "No disponible",
+      enum: ["No disponible", "morning", "afternoon", "night", "allDay"],
     },
     onlineStatus: {
       type: Boolean,
