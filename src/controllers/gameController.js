@@ -2,6 +2,7 @@ require("dotenv").config();
 const Game = require("../models/gameModel");
 const Platform = require("../models/platformModel");
 const mongoose = require("mongoose");
+const User = require("../models/userModel");
 
 const API_KEY = process.env.RAWG_API_KEY;
 
@@ -197,18 +198,17 @@ const getGameById = async (req, res) => {
   }
 };
 
-// auth middleware debe llenar req.user con el usuario actual
 const getFriendsWhoLikeGame = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { gameId } = req.params;
+    const { id: gameId } = req.params;
 
     // Obtén al usuario actual con su lista de amigos
     const user = await User.findById(userId).populate("friends");
 
     // Filtra amigos que tengan el juego como favorito
     const matchingFriends = user.friends.filter((friend) =>
-      friend.favoriteGames.includes(gameId)
+      friend.favoriteGames.some((game) => game.rawgId === gameId)
     );
 
     const result = matchingFriends.map((friend) => ({
