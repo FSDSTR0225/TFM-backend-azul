@@ -56,10 +56,6 @@ app.use(
   })
 );
 
-const passport = require("../src/config/steamLogin");
-app.use(passport.initialize());
-app.use(passport.session());
-
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
