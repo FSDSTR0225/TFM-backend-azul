@@ -64,11 +64,12 @@ const userSchema = new mongoose.Schema(
     ],
     avatar: {
       type: String,
-      default: "https://res.cloudinary.com/dem2fr34y/image/upload/v1752591801/blankImg_vt97qn.jpg"
+      default:
+        "https://res.cloudinary.com/dem2fr34y/image/upload/v1752591801/blankImg_vt97qn.jpg",
     },
     availability: {
       type: String,
-      default: "No disponible",
+      default: "notAvailable",
       enum: ["notAvailable", "morning", "afternoon", "night", "allDay"],
     },
     onlineStatus: {
