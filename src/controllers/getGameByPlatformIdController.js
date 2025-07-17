@@ -11,7 +11,13 @@ const getGamesByPlatformId = async (req, res) => {
       return res.status(404).json({ message: "Plataforma no encontrada" });
     }
 
-    const games = await Game.find({ platforms: platformId }); //.sort({ name: 1 }) Ordenar por nombre de juego alfabeticamente
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 25;
+    const skip = (page - 1) * limit;
+
+    const games = await Game.find({ platforms: platformId })
+      .skip(skip)
+      .limit(limit); //.sort({ name: 1 }) Ordenar por nombre de juego alfabeticamente
 
     if (games.length === 0) {
       // si el array devuelto esta vacio..

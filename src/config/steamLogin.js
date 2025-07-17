@@ -2,8 +2,6 @@ const passport = require("passport");
 const SteamStrategy = require("passport-steam").Strategy;
 const User = require("../models/userModel");
 
-console.log("API KEY:", process.env.STEAM_API_KEY);
-
 passport.use(
   new SteamStrategy(
     {

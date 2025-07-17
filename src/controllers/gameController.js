@@ -2,6 +2,7 @@ require("dotenv").config();
 const Game = require("../models/gameModel");
 const Platform = require("../models/platformModel");
 const mongoose = require("mongoose");
+const User = require("../models/userModel");
 
 const API_KEY = process.env.RAWG_API_KEY;
 
@@ -197,7 +198,155 @@ const getGameById = async (req, res) => {
   }
 };
 
-module.exports = { getGames, getGameById };
+const getFriendsWhoLikeGame = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id: rawgId } = req.params;
+
+    console.log("👉 userId recibido:", userId);
+    console.log("👉 rawgId recibido:", rawgId);
+
+    // 1. Buscar el juego en la colección Game a partir de su rawgId
+    const game = await Game.findOne({ rawgId });
+    if (!game) {
+      return res.status(404).json({ message: "Juego no encontrado" });
+    }
+
+    const gameId = game._id.toString();
+    console.log("🎮 game._id real:", gameId);
+
+    // 2. Cargar usuario con amigos
+    const user = await User.findById(userId).populate("friends.user");
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // 3. Filtrar amigos que tengan este juego como favorito
+    const matchingFriends = user.friends.filter(({ user: friend }) => {
+      if (!friend) return false;
+      return (
+        Array.isArray(friend.favoriteGames) &&
+        friend.favoriteGames.some((favId) => favId.toString() === gameId)
+      );
+    });
+
+    console.log("🧠 Amigos del usuario:");
+    user.friends.forEach(({ user: friend }) => {
+      console.log({
+        friendUsername: friend?.username,
+        favoriteGames: friend?.favoriteGames,
+      });
+    });
+
+    const result = matchingFriends.map(({ user: friend }) => ({
+      _id: friend._id,
+      username: friend.username,
+      avatar: friend.avatar,
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("❌ Error interno en getFriendsWhoLikeGame:", err);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+const getSimilarGames = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isMongoId = mongoose.Types.ObjectId.isValid(id);
+
+    const query = isMongoId
+      ? { $or: [{ _id: id }, { rawgId: id }] }
+      : { rawgId: id };
+
+    const currentGame = await Game.findOne(query);
+
+    if (!currentGame) {
+      return res.status(404).json({ message: "Juego no encontrado" });
+    }
+
+    const { genres, developers } = currentGame;
+
+    if (!genres?.length && !developers?.length) {
+      return res.status(200).json([]);
+    }
+
+    const allGames = await Game.find({
+      _id: { $ne: currentGame._id },
+    }).select("name imageUrl rawgId genres developers");
+
+    // Calcular puntuación por similitud
+    const scoredGames = allGames
+      .map((game) => {
+        let score = 0;
+
+        // Coincidencia exacta de developers
+        if (game.developers?.some((dev) => developers?.includes(dev))) {
+          score += 2;
+        }
+
+        // Coincidencias en géneros
+        if (game.genres?.length && genres?.length) {
+          const commonGenres = game.genres.filter((g) => genres.includes(g));
+          score += commonGenres.length; // 1 punto por género
+        }
+
+        return { ...game._doc, score };
+      })
+      .filter((g) => g.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    if (scoredGames.length >= 3) {
+      return res.status(200).json(scoredGames);
+    }
+
+    // Fallback a RAWG si hay pocos resultados
+    const rawgQuery = new URLSearchParams({
+      genres: genres?.slice(0, 2).join(",") || "",
+      developers: developers?.[0] || "",
+      page_size: 5,
+      key: API_KEY,
+    }).toString();
+
+    const rawgRes = await fetch(`https://api.rawg.io/api/games?${rawgQuery}`);
+    if (!rawgRes.ok) {
+      throw new Error("Error al obtener sugerencias desde RAWG");
+    }
+
+    const rawgData = await rawgRes.json();
+
+    const rawgGames = rawgData.results.map((game) => ({
+      rawgId: String(game.id),
+      name: game.name,
+      imageUrl: game.background_image,
+      genres: game.genres.map((g) => g.name),
+      platforms: game.platforms.map((p) => p.platform.slug),
+      released: game.released,
+      metacritic: game.metacritic,
+    }));
+
+    const combined = [
+      ...scoredGames,
+      ...rawgGames.filter(
+        (rawg) => !scoredGames.some((local) => local.name === rawg.name)
+      ),
+    ].slice(0, 5);
+
+    res.status(200).json(combined);
+  } catch (error) {
+    console.error("Error en getSimilarGames:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+module.exports = {
+  getGames,
+  getGameById,
+  getFriendsWhoLikeGame,
+  getSimilarGames,
+};
 
 //Tags irrelevantes
 

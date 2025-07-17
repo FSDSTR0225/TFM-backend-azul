@@ -1,6 +1,8 @@
 const User = require("../models/userModel");
 
 const addFavoriteGame = async (req, res) => {
+  console.log("📥 Body recibido:", req.body);
+  console.log("🧑‍💻 Usuario:", req.user.id);
   try {
     const userId = req.user.id; // obtenemos el user id del token que hemos decodificado en el middleware verifyToken
     const gameIds = req.body.gameIds; // Obtenemos el o los ids del juego de la peticion cuando lo indicamos en el frontend (hacemos click en el chips)
@@ -32,6 +34,7 @@ const addFavoriteGame = async (req, res) => {
     );
 
     user.favoriteGames.push(...gamesToAdd); // Añadimos los juegos a favoritos, el ... es para que si le llega un array lo añada como array y no como un solo elemento y si es un solo elemento lo añada como un solo elemento.
+    console.log("🧠 User antes de guardar:", user);
     await user.save(); // lo añadimos y guardamos cambios.
 
     return res.status(200).json({

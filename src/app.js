@@ -19,8 +19,30 @@ const chatbotRoute = require("./routes/chatbotRoute");
 const chatRoute = require("./routes/chatRoute");
 const notificationRoute = require("./routes/notificationRoute");
 const steamRoute = require("./routes/steamRoute");
+const translateRoute = require("./routes/translateRoute");
 
 const app = express();
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://link2play.netlify.app",
+  "https://686ec51a2cfdca916777de77--link2play.netlify.app",
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+    ],
+  })
+);
 
 app.use(
   session({
@@ -37,16 +59,6 @@ app.use(
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://link2play.netlify.app/",
-      "https://686ec51a2cfdca916777de77--link2play.netlify.app",
-    ],
-    credentials: true, // puedes quitar esto si NO usas cookies
-  })
-);
 
 // Rutas
 app.use("/auth", authRoute);
@@ -65,5 +77,6 @@ app.use("/chats", chatRoute);
 app.use("/notifications", notificationRoute);
 app.use("/chatbot", chatbotRoute);
 app.use("/steam", steamRoute);
+app.use("/translate", translateRoute);
 
 module.exports = app;

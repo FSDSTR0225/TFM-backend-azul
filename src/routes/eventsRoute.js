@@ -13,6 +13,7 @@ const {
   leaveEvent,
   getAllMyEvents,
   getMyJoinedEvents,
+  getEventsByGame,
 } = require("../controllers/eventController");
 const verifyToken = require("../middlewares/verifyToken");
 
@@ -22,6 +23,7 @@ router.get("/", getEvents);
 // Rutas privadas
 router.post("/", verifyToken, createEvent); // Crear evento
 router.get("/today", verifyToken, getEventsToday); // Obtener eventos del dia de hoy
+router.get("/by-game", verifyToken, getEventsByGame); // Obtener eventos por juego')
 router.put("/:eventId", verifyToken, updateEvent); // Actualizar evento creado por mi
 router.delete("/:eventId", verifyToken, deleteEvent); // Eliminar evento creado por mi
 router.get("/my-events", verifyToken, getAllMyEvents); // Obtener todos los eventos en los que participo (creados por mi o a los que me he unido)

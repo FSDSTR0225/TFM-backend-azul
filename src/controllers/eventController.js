@@ -70,19 +70,19 @@ const getEvents = async (req, res) => {
           id: event._id.toString(),
           title: event.title,
           game: {
-            name: event.game.name,
-            imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
+            name: event.game?.name,
+            imageUrl: event.game?.imageUrl, // Incluimos la imagen del juego si está disponible
           },
           platform: {
-            name: event.platform.name,
-            icon: event.platform.icon,
+            name: event.platform?.name,
+            icon: event.platform?.icon,
           },
           date: event.date,
           requiresApproval: event.requiresApproval,
           participants: event.participants.length,
           maxParticipants: event.maxParticipants,
           creator: {
-            username: event.creator.username,
+            username: event.creator?.username,
             avatar: event.creator.avatar,
           },
         };
@@ -650,6 +650,34 @@ const getMyJoinedEvents = async (req, res) => {
   }
 };
 
+const mongoose = require("mongoose");
+
+const getEventsByGame = async (req, res) => {
+  try {
+    const { gameId } = req.query;
+
+    if (!gameId) {
+      return res.status(400).json({ message: "gameId requerido" });
+    }
+
+    const now = new Date();
+
+    const count = await Event.countDocuments({
+      game: new mongoose.Types.ObjectId(gameId), // 👈 CAMBIO AQUÍ
+      date: { $gte: now },
+    });
+
+    console.log("🧩 gameId recibido:", gameId);
+    console.log("🕒 Fecha actual:", now);
+    console.log("📊 Eventos encontrados:", count);
+
+    res.json({ count });
+  } catch (error) {
+    console.error("Error al contar eventos por juego:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   createEvent,
   getEvents,
@@ -663,4 +691,5 @@ module.exports = {
   leaveEvent,
   getAllMyEvents,
   getMyJoinedEvents,
+  getEventsByGame,
 };
