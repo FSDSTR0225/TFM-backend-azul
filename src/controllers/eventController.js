@@ -61,7 +61,8 @@ const getEvents = async (req, res) => {
       .sort({ date: 1 }) // Obtenemos los eventos que ocurren a partir de hoy, ordenados por fecha ascendente
       .populate("game", "name imageUrl") // obtenemos el nombre del juego y la imagen del juego
       .populate("creator", "username avatar")
-      .populate("platform", "name icon");
+      .populate("platform", "name icon")
+      .populate("participants", "username avatar"); // obtenemos los participantes del evento
 
     const events = dbEvents
       .filter((event) => event.creator)
@@ -555,7 +556,8 @@ const getAllMyEvents = async (req, res) => {
       .sort({ date: 1 })
       .populate({ path: "game", select: "name imageUrl" })
       .populate({ path: "platform", select: "name icon" })
-      .populate({ path: "creator", select: "username avatar" });
+      .populate({ path: "creator", select: "username avatar" })
+      .populate({ path: "participants", select: "username avatar" }); // obtenemos los participantes del evento
 
     // OPCION VALIDA TAMBIEN
     // .populate("game", "name")
