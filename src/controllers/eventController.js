@@ -70,19 +70,19 @@ const getEvents = async (req, res) => {
           id: event._id.toString(),
           title: event.title,
           game: {
-            name: event.game.name,
-            imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
+            name: event.game?.name,
+            imageUrl: event.game?.imageUrl, // Incluimos la imagen del juego si está disponible
           },
           platform: {
-            name: event.platform.name,
-            icon: event.platform.icon,
+            name: event.platform?.name,
+            icon: event.platform?.icon,
           },
           date: event.date,
           requiresApproval: event.requiresApproval,
           participants: event.participants.length,
           maxParticipants: event.maxParticipants,
           creator: {
-            username: event.creator.username,
+            username: event.creator?.username,
             avatar: event.creator.avatar,
           },
         };
