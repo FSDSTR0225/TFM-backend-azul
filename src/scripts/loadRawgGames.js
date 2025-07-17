@@ -25,6 +25,7 @@ async function importGames() {
         `https://api.rawg.io/api/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=-added`
       );
       const data = await res.json();
+      console.log("Respuesta del backend al crear hilo:", data);
 
       for (let i = 0; i < data.results.length; i++) {
         try {
