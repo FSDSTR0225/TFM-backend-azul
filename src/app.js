@@ -71,7 +71,7 @@ app.use("/dashboard", dashboardRoute);
 app.use("/friends", friendsRoute);
 app.use("/events", eventsRoute);
 app.use("/join-request", joinRequestRoute);
-app.use("/posts", postRoute); // ✅ rutas de post
+app.use("/posts", postRoute);
 app.use("/dashboard/widgets", widgetConfigRoute);
 app.use("/chats", chatRoute);
 app.use("/notifications", notificationRoute);
