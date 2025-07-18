@@ -23,13 +23,32 @@ const getNotifications = async (req, res) => {
   }
 };
 
+// const markNotificationAsRead = async (req, res) => {
+//   try {
+//     await Notification.updateMany(
+//       { targetUser: req.user.id, read: false },
+//       { $set: { read: true } }
+//     );
+//     return res.status(204).end();
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ error: "No se pudieron marcar como leídas" });
+//   }
+// };
+
 const markNotificationAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
       { targetUser: req.user.id, read: false },
       { $set: { read: true } }
     );
-    return res.status(204).end();
+
+    //  Devuelve las notificaciones ya actualizadas
+    const updated = await Notification.find({ targetUser: req.user.id }).sort({
+      createdAt: -1,
+    });
+
+    return res.json(updated);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "No se pudieron marcar como leídas" });
