@@ -629,7 +629,7 @@ const getMyJoinedEvents = async (req, res) => {
       maxParticipants: event.maxParticipants,
       game: {
         name: event.game.name,
-        imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponible
+        imageUrl: event.game.imageUrl, // Incluimos la imagen del juego si está disponibleE
       },
       platform: {
         name: event.platform.name,
