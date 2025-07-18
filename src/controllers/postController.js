@@ -48,20 +48,14 @@ const getAllPosts = async (req, res) => {
   }
 };
 
-// Obtener un post por ID
+// Obtener un post por ID con comentarios
 const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate("creator", "username avatar")
       .populate("game", "name")
       .populate("platform", "name icon")
-      .populate({
-        path: "comments",
-        populate: {
-          path: "author",
-          select: "username avatar",
-        },
-      });
+      .populate("comments.author", "username avatar");
 
     if (!post) return res.status(404).json({ message: "Hilo no encontrado" });
 
@@ -125,10 +119,157 @@ const deletePost = async (req, res) => {
   }
 };
 
+// Añadir comentario a un post (comentarios embebidos)
+const addCommentToPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content } = req.body;
+
+    if (!content) {
+      return res
+        .status(400)
+        .json({ message: "El comentario no puede estar vacío" });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post no encontrado" });
+
+    const newComment = {
+      content,
+      author: req.user.id,
+    };
+
+    post.comments.push(newComment);
+    await post.save();
+
+    // Poblar el autor del comentario insertado
+    const populatedPost = await Post.findById(postId).populate(
+      "comments.author",
+      "username avatar"
+    );
+
+    const addedComment =
+      populatedPost.comments[populatedPost.comments.length - 1];
+
+    res.status(201).json(addedComment);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error al añadir comentario", error: error.message });
+  }
+};
+
+// Obtener comentarios de un post
+const getCommentsByPost = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const post = await Post.findById(postId).populate(
+      "comments.author",
+      "username avatar"
+    );
+
+    if (!post) {
+      return res.status(404).json({ message: "Post no encontrado" });
+    }
+
+    res.status(200).json(post.comments);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener comentarios", error });
+  }
+};
+
+// Editar comentario
+const updateComment = async (req, res) => {
+  const { postId, commentId } = req.params;
+  const { content } = req.body;
+
+  if (!content) {
+    return res
+      .status(400)
+      .json({ message: "El comentario no puede estar vacío" });
+  }
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post no encontrado" });
+
+    // Buscar el comentario embebido
+    const comment = post.comments.id(commentId);
+    if (!comment)
+      return res.status(404).json({ message: "Comentario no encontrado" });
+
+    // Solo puede editar el autor del comentario
+    if (comment.author.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "No autorizado para editar este comentario" });
+    }
+
+    comment.content = content;
+    await post.save();
+
+    // Poblar autor actualizado para devolverlo
+    const populatedPost = await Post.findById(postId).populate(
+      "comments.author",
+      "username avatar"
+    );
+    const updatedComment = populatedPost.comments.id(commentId);
+
+    res.status(200).json(updatedComment);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al actualizar comentario",
+      error: error.message,
+    });
+  }
+};
+
+// Borrar comentario
+const deleteComment = async (req, res) => {
+  const { postId, commentId } = req.params;
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post no encontrado" });
+
+    const comment = post.comments.id(commentId);
+    if (!comment)
+      return res.status(404).json({ message: "Comentario no encontrado" });
+
+    // Solo autor del comentario o creador del post pueden borrar
+    if (
+      comment.author.toString() !== req.user.id &&
+      post.creator.toString() !== req.user.id
+    ) {
+      return res
+        .status(403)
+        .json({ message: "No autorizado para borrar este comentario" });
+    }
+
+    comment.remove();
+    await post.save();
+
+    return res
+      .status(200)
+      .json({ message: "Comentario eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar comentario:", error);
+    return res.status(500).json({
+      message: "Error al eliminar comentario",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createPost,
   getAllPosts,
   getPostById,
   updatePost,
   deletePost,
+  addCommentToPost,
+  getCommentsByPost,
+  updateComment,
+  deleteComment,
 };

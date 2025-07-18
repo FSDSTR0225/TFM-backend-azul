@@ -58,7 +58,7 @@ app.use(
 
 // Middlewares
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Para parsear datos de formularios,urlencoded hace falta para que express pueda leer los datos de formularios HTML
+app.use(express.urlencoded({ extended: true }));
 
 // Rutas
 app.use("/auth", authRoute);
@@ -71,7 +71,7 @@ app.use("/dashboard", dashboardRoute);
 app.use("/friends", friendsRoute);
 app.use("/events", eventsRoute);
 app.use("/join-request", joinRequestRoute);
-app.use("/post", postRoute);
+app.use("/posts", postRoute); // ✅ rutas de post
 app.use("/dashboard/widgets", widgetConfigRoute);
 app.use("/chats", chatRoute);
 app.use("/notifications", notificationRoute);
