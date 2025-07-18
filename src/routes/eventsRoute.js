@@ -32,6 +32,6 @@ router.get("/my-events/joined", verifyToken, getMyJoinedEvents); // Obtener even
 router.get("/past", verifyToken, getPastEvents); // Obtener eventos pasados (creados por mi) para historial,estadisticas, gamificacion, etc.
 router.get("/:eventId", verifyToken, getEventById); // Obtener detalle/acceder a un evento especifico
 router.post("/:eventId/join", verifyToken, joinEvent); // Unirse/solicitar unirse a un evento especifico
-router.delete("/:eventId/leaveEvent", verifyToken, leaveEvent); // Dejar un evento especifico al que ya estamos unidos
+router.delete("/:eventId/leave-event", verifyToken, leaveEvent); // Dejar un evento especifico al que ya estamos unidoos
 
 module.exports = router;
