@@ -586,7 +586,7 @@ const getAllMyEvents = async (req, res) => {
         username: event.creator.username,
         avatar: event.creator.avatar,
       },
-      participants: event.participants.length,
+      participants: event.participants,
     }));
 
     return res.status(200).json({
@@ -639,7 +639,7 @@ const getMyJoinedEvents = async (req, res) => {
         username: event.creator.username,
         avatar: event.creator.avatar,
       },
-      participants: event.participants.length,
+      participants: event.participants,
     }));
 
     return res.status(200).json({
